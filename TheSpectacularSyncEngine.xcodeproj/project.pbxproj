@@ -1,0 +1,629 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4C04766C1A53E19900894457 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C04766B1A53E19900894457 /* main.m */; };
+		4C04766F1A53E19900894457 /* DSAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C04766E1A53E19900894457 /* DSAppDelegate.m */; };
+		4C0476721A53E19900894457 /* DSMainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C0476711A53E19900894457 /* DSMainViewController.m */; };
+		4C0476751A53E19900894457 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4C0476731A53E19900894457 /* Main.storyboard */; };
+		4C0476771A53E19900894457 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4C0476761A53E19900894457 /* Images.xcassets */; };
+		4C04767A1A53E19900894457 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4C0476781A53E19900894457 /* LaunchScreen.xib */; };
+		4C0476911A53E1DC00894457 /* DSAudioEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C0476901A53E1DC00894457 /* DSAudioEngine.m */; };
+		4C27A87A1A5F690800BE0518 /* SECommon.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8691A5F690800BE0518 /* SECommon.m */; };
+		4C27A87B1A5F690800BE0518 /* SECommon.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8691A5F690800BE0518 /* SECommon.m */; };
+		4C27A87C1A5F690800BE0518 /* SEMIDIClockReceiver.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A86B1A5F690800BE0518 /* SEMIDIClockReceiver.m */; };
+		4C27A87D1A5F690800BE0518 /* SEMIDIClockReceiver.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A86B1A5F690800BE0518 /* SEMIDIClockReceiver.m */; };
+		4C27A87E1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A86D1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m */; };
+		4C27A87F1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A86D1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m */; };
+		4C27A8821A5F690800BE0518 /* SEMIDIClockSender.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8711A5F690800BE0518 /* SEMIDIClockSender.m */; };
+		4C27A8831A5F690800BE0518 /* SEMIDIClockSender.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8711A5F690800BE0518 /* SEMIDIClockSender.m */; };
+		4C27A8841A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8731A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.m */; };
+		4C27A8851A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8731A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.m */; };
+		4C27A8881A5F690800BE0518 /* SEMIDIDestinationsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8771A5F690800BE0518 /* SEMIDIDestinationsTableViewController.m */; };
+		4C27A8891A5F690800BE0518 /* SEMIDIDestinationsTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8771A5F690800BE0518 /* SEMIDIDestinationsTableViewController.m */; };
+		4C27A88A1A5F690800BE0518 /* SEMIDISourcesTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8791A5F690800BE0518 /* SEMIDISourcesTableViewController.m */; };
+		4C27A88B1A5F690800BE0518 /* SEMIDISourcesTableViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8791A5F690800BE0518 /* SEMIDISourcesTableViewController.m */; };
+		4C4438CC1A5407C800176535 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C4438CB1A5407C800176535 /* XCTest.framework */; };
+		4C4438CE1A5407C800176535 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C4438CD1A5407C800176535 /* Foundation.framework */; };
+		4C4438D01A5407C800176535 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C4438CF1A5407C800176535 /* UIKit.framework */; };
+		4C4438D61A5407C800176535 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4C4438D41A5407C800176535 /* InfoPlist.strings */; };
+		4C4438D81A5407C800176535 /* SEMIDIClockSenderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C4438D71A5407C800176535 /* SEMIDIClockSenderTests.m */; };
+		4C8D302F1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C8D302E1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m */; };
+		4CC0C7C91A55486A004AC6FE /* DSBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CC0C7C81A55486A004AC6FE /* DSBackgroundView.m */; };
+		4CD2FA5D1A5CCF1500070D06 /* DSPlayPauseButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD2FA5C1A5CCF1500070D06 /* DSPlayPauseButton.m */; };
+		4CD2FA601A5CDAFE00070D06 /* DSMetronome.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD2FA5F1A5CDAFE00070D06 /* DSMetronome.m */; };
+		4CD2FA651A5D21EC00070D06 /* TPDismissSegue.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD2FA641A5D21EC00070D06 /* TPDismissSegue.m */; };
+		4CDED2FD1A5BB37D0091ABAB /* DSTempoPulseView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CDED2FC1A5BB37D0091ABAB /* DSTempoPulseView.m */; };
+		4CDED3001A5BC63B0091ABAB /* DSGraphics.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CDED2FF1A5BC63B0091ABAB /* DSGraphics.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4C4438DA1A5407C800176535 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C04765E1A53E19900894457 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C0476651A53E19900894457;
+			remoteInfo = SEMIDIClock;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		4C0476661A53E19900894457 /* DoctorSync.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DoctorSync.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C04766A1A53E19900894457 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4C04766B1A53E19900894457 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		4C04766D1A53E19900894457 /* DSAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DSAppDelegate.h; sourceTree = "<group>"; };
+		4C04766E1A53E19900894457 /* DSAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DSAppDelegate.m; sourceTree = "<group>"; };
+		4C0476701A53E19900894457 /* DSMainViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DSMainViewController.h; sourceTree = "<group>"; };
+		4C0476711A53E19900894457 /* DSMainViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DSMainViewController.m; sourceTree = "<group>"; };
+		4C0476741A53E19900894457 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		4C0476761A53E19900894457 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		4C0476791A53E19900894457 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
+		4C04768F1A53E1DC00894457 /* DSAudioEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSAudioEngine.h; sourceTree = "<group>"; };
+		4C0476901A53E1DC00894457 /* DSAudioEngine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSAudioEngine.m; sourceTree = "<group>"; };
+		4C27A8681A5F690800BE0518 /* SECommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SECommon.h; path = TheSpectacularSyncEngine/SECommon.h; sourceTree = "<group>"; };
+		4C27A8691A5F690800BE0518 /* SECommon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SECommon.m; path = TheSpectacularSyncEngine/SECommon.m; sourceTree = "<group>"; };
+		4C27A86A1A5F690800BE0518 /* SEMIDIClockReceiver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDIClockReceiver.h; path = TheSpectacularSyncEngine/SEMIDIClockReceiver.h; sourceTree = "<group>"; };
+		4C27A86B1A5F690800BE0518 /* SEMIDIClockReceiver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDIClockReceiver.m; path = TheSpectacularSyncEngine/SEMIDIClockReceiver.m; sourceTree = "<group>"; };
+		4C27A86C1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDIClockReceiverCoreMIDIInterface.h; path = TheSpectacularSyncEngine/SEMIDIClockReceiverCoreMIDIInterface.h; sourceTree = "<group>"; };
+		4C27A86D1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDIClockReceiverCoreMIDIInterface.m; path = TheSpectacularSyncEngine/SEMIDIClockReceiverCoreMIDIInterface.m; sourceTree = "<group>"; };
+		4C27A86E1A5F690800BE0518 /* SEMIDIClockReceiverPGMidiInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDIClockReceiverPGMidiInterface.h; path = TheSpectacularSyncEngine/SEMIDIClockReceiverPGMidiInterface.h; sourceTree = "<group>"; };
+		4C27A86F1A5F690800BE0518 /* SEMIDIClockReceiverPGMidiInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDIClockReceiverPGMidiInterface.m; path = TheSpectacularSyncEngine/SEMIDIClockReceiverPGMidiInterface.m; sourceTree = "<group>"; };
+		4C27A8701A5F690800BE0518 /* SEMIDIClockSender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDIClockSender.h; path = TheSpectacularSyncEngine/SEMIDIClockSender.h; sourceTree = "<group>"; };
+		4C27A8711A5F690800BE0518 /* SEMIDIClockSender.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDIClockSender.m; path = TheSpectacularSyncEngine/SEMIDIClockSender.m; sourceTree = "<group>"; };
+		4C27A8721A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDIClockSenderCoreMIDIInterface.h; path = TheSpectacularSyncEngine/SEMIDIClockSenderCoreMIDIInterface.h; sourceTree = "<group>"; };
+		4C27A8731A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDIClockSenderCoreMIDIInterface.m; path = TheSpectacularSyncEngine/SEMIDIClockSenderCoreMIDIInterface.m; sourceTree = "<group>"; };
+		4C27A8741A5F690800BE0518 /* SEMIDIClockSenderPGMidiInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDIClockSenderPGMidiInterface.h; path = TheSpectacularSyncEngine/SEMIDIClockSenderPGMidiInterface.h; sourceTree = "<group>"; };
+		4C27A8751A5F690800BE0518 /* SEMIDIClockSenderPGMidiInterface.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDIClockSenderPGMidiInterface.m; path = TheSpectacularSyncEngine/SEMIDIClockSenderPGMidiInterface.m; sourceTree = "<group>"; };
+		4C27A8761A5F690800BE0518 /* SEMIDIDestinationsTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDIDestinationsTableViewController.h; path = TheSpectacularSyncEngine/SEMIDIDestinationsTableViewController.h; sourceTree = "<group>"; };
+		4C27A8771A5F690800BE0518 /* SEMIDIDestinationsTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDIDestinationsTableViewController.m; path = TheSpectacularSyncEngine/SEMIDIDestinationsTableViewController.m; sourceTree = "<group>"; };
+		4C27A8781A5F690800BE0518 /* SEMIDISourcesTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDISourcesTableViewController.h; path = TheSpectacularSyncEngine/SEMIDISourcesTableViewController.h; sourceTree = "<group>"; };
+		4C27A8791A5F690800BE0518 /* SEMIDISourcesTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDISourcesTableViewController.m; path = TheSpectacularSyncEngine/SEMIDISourcesTableViewController.m; sourceTree = "<group>"; };
+		4C4438C91A5407C800176535 /* TheSpectacularSyncEngineTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TheSpectacularSyncEngineTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4C4438CB1A5407C800176535 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		4C4438CD1A5407C800176535 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		4C4438CF1A5407C800176535 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		4C4438D31A5407C800176535 /* TheSpectacularSyncEngineTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "TheSpectacularSyncEngineTests-Info.plist"; sourceTree = "<group>"; };
+		4C4438D51A5407C800176535 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		4C4438D71A5407C800176535 /* SEMIDIClockSenderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SEMIDIClockSenderTests.m; sourceTree = "<group>"; };
+		4C4438D91A5407C800176535 /* TheSpectacularSyncEngineTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TheSpectacularSyncEngineTests-Prefix.pch"; sourceTree = "<group>"; };
+		4C8D302E1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEMIDIClockReceiverTests.m; sourceTree = "<group>"; };
+		4CC0C7C71A55486A004AC6FE /* DSBackgroundView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSBackgroundView.h; sourceTree = "<group>"; };
+		4CC0C7C81A55486A004AC6FE /* DSBackgroundView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSBackgroundView.m; sourceTree = "<group>"; };
+		4CD2FA5B1A5CCF1500070D06 /* DSPlayPauseButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSPlayPauseButton.h; sourceTree = "<group>"; };
+		4CD2FA5C1A5CCF1500070D06 /* DSPlayPauseButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSPlayPauseButton.m; sourceTree = "<group>"; };
+		4CD2FA5E1A5CDAFE00070D06 /* DSMetronome.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSMetronome.h; sourceTree = "<group>"; };
+		4CD2FA5F1A5CDAFE00070D06 /* DSMetronome.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSMetronome.m; sourceTree = "<group>"; };
+		4CD2FA631A5D21EC00070D06 /* TPDismissSegue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TPDismissSegue.h; sourceTree = "<group>"; };
+		4CD2FA641A5D21EC00070D06 /* TPDismissSegue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TPDismissSegue.m; sourceTree = "<group>"; };
+		4CDED2FB1A5BB37D0091ABAB /* DSTempoPulseView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSTempoPulseView.h; sourceTree = "<group>"; };
+		4CDED2FC1A5BB37D0091ABAB /* DSTempoPulseView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSTempoPulseView.m; sourceTree = "<group>"; };
+		4CDED2FE1A5BC63B0091ABAB /* DSGraphics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSGraphics.h; sourceTree = "<group>"; };
+		4CDED2FF1A5BC63B0091ABAB /* DSGraphics.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSGraphics.m; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4C0476631A53E19900894457 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4C4438C61A5407C800176535 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C4438CC1A5407C800176535 /* XCTest.framework in Frameworks */,
+				4C4438D01A5407C800176535 /* UIKit.framework in Frameworks */,
+				4C4438CE1A5407C800176535 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4C04765D1A53E19900894457 = {
+			isa = PBXGroup;
+			children = (
+				4C4438AF1A53E41300176535 /* The Spectacular Sync Engine */,
+				4C0476681A53E19900894457 /* Sample App: Doctor Sync */,
+				4C4438D11A5407C800176535 /* Unit Tests */,
+				4C4438CA1A5407C800176535 /* Frameworks */,
+				4C0476671A53E19900894457 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4C0476671A53E19900894457 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4C0476661A53E19900894457 /* DoctorSync.app */,
+				4C4438C91A5407C800176535 /* TheSpectacularSyncEngineTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4C0476681A53E19900894457 /* Sample App: Doctor Sync */ = {
+			isa = PBXGroup;
+			children = (
+				4C04766D1A53E19900894457 /* DSAppDelegate.h */,
+				4C04766E1A53E19900894457 /* DSAppDelegate.m */,
+				4CD2FA661A5D231300070D06 /* Controllers */,
+				4CD2FA621A5CE63D00070D06 /* Models */,
+				4CD2FA611A5CE63700070D06 /* Views */,
+				4CD2FA701A5DFC5300070D06 /* Utilities */,
+				4C0476731A53E19900894457 /* Main.storyboard */,
+				4C0476761A53E19900894457 /* Images.xcassets */,
+				4C0476781A53E19900894457 /* LaunchScreen.xib */,
+				4C0476691A53E19900894457 /* Supporting Files */,
+			);
+			name = "Sample App: Doctor Sync";
+			path = DoctorSync;
+			sourceTree = "<group>";
+		};
+		4C0476691A53E19900894457 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				4C04766A1A53E19900894457 /* Info.plist */,
+				4C04766B1A53E19900894457 /* main.m */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		4C4438AF1A53E41300176535 /* The Spectacular Sync Engine */ = {
+			isa = PBXGroup;
+			children = (
+				4C27A8681A5F690800BE0518 /* SECommon.h */,
+				4C27A8691A5F690800BE0518 /* SECommon.m */,
+				4C27A86A1A5F690800BE0518 /* SEMIDIClockReceiver.h */,
+				4C27A86B1A5F690800BE0518 /* SEMIDIClockReceiver.m */,
+				4C27A86C1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.h */,
+				4C27A86D1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m */,
+				4C27A86E1A5F690800BE0518 /* SEMIDIClockReceiverPGMidiInterface.h */,
+				4C27A86F1A5F690800BE0518 /* SEMIDIClockReceiverPGMidiInterface.m */,
+				4C27A8701A5F690800BE0518 /* SEMIDIClockSender.h */,
+				4C27A8711A5F690800BE0518 /* SEMIDIClockSender.m */,
+				4C27A8721A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.h */,
+				4C27A8731A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.m */,
+				4C27A8741A5F690800BE0518 /* SEMIDIClockSenderPGMidiInterface.h */,
+				4C27A8751A5F690800BE0518 /* SEMIDIClockSenderPGMidiInterface.m */,
+				4C27A8761A5F690800BE0518 /* SEMIDIDestinationsTableViewController.h */,
+				4C27A8771A5F690800BE0518 /* SEMIDIDestinationsTableViewController.m */,
+				4C27A8781A5F690800BE0518 /* SEMIDISourcesTableViewController.h */,
+				4C27A8791A5F690800BE0518 /* SEMIDISourcesTableViewController.m */,
+			);
+			name = "The Spectacular Sync Engine";
+			sourceTree = "<group>";
+		};
+		4C4438CA1A5407C800176535 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4C4438CB1A5407C800176535 /* XCTest.framework */,
+				4C4438CD1A5407C800176535 /* Foundation.framework */,
+				4C4438CF1A5407C800176535 /* UIKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4C4438D11A5407C800176535 /* Unit Tests */ = {
+			isa = PBXGroup;
+			children = (
+				4C4438D71A5407C800176535 /* SEMIDIClockSenderTests.m */,
+				4C8D302E1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m */,
+				4C4438D21A5407C800176535 /* Supporting Files */,
+			);
+			name = "Unit Tests";
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		4C4438D21A5407C800176535 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				4C4438D31A5407C800176535 /* TheSpectacularSyncEngineTests-Info.plist */,
+				4C4438D41A5407C800176535 /* InfoPlist.strings */,
+				4C4438D91A5407C800176535 /* TheSpectacularSyncEngineTests-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		4CD2FA611A5CE63700070D06 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				4CC0C7C71A55486A004AC6FE /* DSBackgroundView.h */,
+				4CC0C7C81A55486A004AC6FE /* DSBackgroundView.m */,
+				4CDED2FB1A5BB37D0091ABAB /* DSTempoPulseView.h */,
+				4CDED2FC1A5BB37D0091ABAB /* DSTempoPulseView.m */,
+				4CDED2FE1A5BC63B0091ABAB /* DSGraphics.h */,
+				4CDED2FF1A5BC63B0091ABAB /* DSGraphics.m */,
+				4CD2FA5B1A5CCF1500070D06 /* DSPlayPauseButton.h */,
+				4CD2FA5C1A5CCF1500070D06 /* DSPlayPauseButton.m */,
+			);
+			name = Views;
+			sourceTree = "<group>";
+		};
+		4CD2FA621A5CE63D00070D06 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				4C04768F1A53E1DC00894457 /* DSAudioEngine.h */,
+				4C0476901A53E1DC00894457 /* DSAudioEngine.m */,
+				4CD2FA5E1A5CDAFE00070D06 /* DSMetronome.h */,
+				4CD2FA5F1A5CDAFE00070D06 /* DSMetronome.m */,
+			);
+			name = Models;
+			sourceTree = "<group>";
+		};
+		4CD2FA661A5D231300070D06 /* Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				4C0476701A53E19900894457 /* DSMainViewController.h */,
+				4C0476711A53E19900894457 /* DSMainViewController.m */,
+			);
+			name = Controllers;
+			sourceTree = "<group>";
+		};
+		4CD2FA701A5DFC5300070D06 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				4CD2FA631A5D21EC00070D06 /* TPDismissSegue.h */,
+				4CD2FA641A5D21EC00070D06 /* TPDismissSegue.m */,
+			);
+			name = Utilities;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4C0476651A53E19900894457 /* Doctor Sync */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C0476891A53E19900894457 /* Build configuration list for PBXNativeTarget "Doctor Sync" */;
+			buildPhases = (
+				4C0476621A53E19900894457 /* Sources */,
+				4C0476631A53E19900894457 /* Frameworks */,
+				4C0476641A53E19900894457 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Doctor Sync";
+			productName = DoctorSync;
+			productReference = 4C0476661A53E19900894457 /* DoctorSync.app */;
+			productType = "com.apple.product-type.application";
+		};
+		4C4438C81A5407C800176535 /* TheSpectacularSyncEngineTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C4438DC1A5407C800176535 /* Build configuration list for PBXNativeTarget "TheSpectacularSyncEngineTests" */;
+			buildPhases = (
+				4C4438C51A5407C800176535 /* Sources */,
+				4C4438C61A5407C800176535 /* Frameworks */,
+				4C4438C71A5407C800176535 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4C4438DB1A5407C800176535 /* PBXTargetDependency */,
+			);
+			name = TheSpectacularSyncEngineTests;
+			productName = Tests;
+			productReference = 4C4438C91A5407C800176535 /* TheSpectacularSyncEngineTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4C04765E1A53E19900894457 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0610;
+				ORGANIZATIONNAME = "A Tasty Pixel";
+				TargetAttributes = {
+					4C0476651A53E19900894457 = {
+						CreatedOnToolsVersion = 6.1.1;
+						SystemCapabilities = {
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
+						};
+					};
+					4C4438C81A5407C800176535 = {
+						TestTargetID = 4C0476651A53E19900894457;
+					};
+				};
+			};
+			buildConfigurationList = 4C0476611A53E19900894457 /* Build configuration list for PBXProject "TheSpectacularSyncEngine" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 4C04765D1A53E19900894457;
+			productRefGroup = 4C0476671A53E19900894457 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4C0476651A53E19900894457 /* Doctor Sync */,
+				4C4438C81A5407C800176535 /* TheSpectacularSyncEngineTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4C0476641A53E19900894457 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C0476751A53E19900894457 /* Main.storyboard in Resources */,
+				4C04767A1A53E19900894457 /* LaunchScreen.xib in Resources */,
+				4C0476771A53E19900894457 /* Images.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4C4438C71A5407C800176535 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C4438D61A5407C800176535 /* InfoPlist.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4C0476621A53E19900894457 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4CD2FA5D1A5CCF1500070D06 /* DSPlayPauseButton.m in Sources */,
+				4CDED3001A5BC63B0091ABAB /* DSGraphics.m in Sources */,
+				4C0476721A53E19900894457 /* DSMainViewController.m in Sources */,
+				4C27A8821A5F690800BE0518 /* SEMIDIClockSender.m in Sources */,
+				4C27A8841A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.m in Sources */,
+				4C04766F1A53E19900894457 /* DSAppDelegate.m in Sources */,
+				4C27A87C1A5F690800BE0518 /* SEMIDIClockReceiver.m in Sources */,
+				4CD2FA651A5D21EC00070D06 /* TPDismissSegue.m in Sources */,
+				4C0476911A53E1DC00894457 /* DSAudioEngine.m in Sources */,
+				4CD2FA601A5CDAFE00070D06 /* DSMetronome.m in Sources */,
+				4C04766C1A53E19900894457 /* main.m in Sources */,
+				4C27A88A1A5F690800BE0518 /* SEMIDISourcesTableViewController.m in Sources */,
+				4C27A87A1A5F690800BE0518 /* SECommon.m in Sources */,
+				4C27A87E1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m in Sources */,
+				4CDED2FD1A5BB37D0091ABAB /* DSTempoPulseView.m in Sources */,
+				4CC0C7C91A55486A004AC6FE /* DSBackgroundView.m in Sources */,
+				4C27A8881A5F690800BE0518 /* SEMIDIDestinationsTableViewController.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4C4438C51A5407C800176535 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C27A87D1A5F690800BE0518 /* SEMIDIClockReceiver.m in Sources */,
+				4C4438D81A5407C800176535 /* SEMIDIClockSenderTests.m in Sources */,
+				4C27A87B1A5F690800BE0518 /* SECommon.m in Sources */,
+				4C27A8851A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.m in Sources */,
+				4C27A87F1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m in Sources */,
+				4C27A8891A5F690800BE0518 /* SEMIDIDestinationsTableViewController.m in Sources */,
+				4C27A88B1A5F690800BE0518 /* SEMIDISourcesTableViewController.m in Sources */,
+				4C27A8831A5F690800BE0518 /* SEMIDIClockSender.m in Sources */,
+				4C8D302F1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4C4438DB1A5407C800176535 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C0476651A53E19900894457 /* Doctor Sync */;
+			targetProxy = 4C4438DA1A5407C800176535 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		4C0476731A53E19900894457 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4C0476741A53E19900894457 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		4C0476781A53E19900894457 /* LaunchScreen.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4C0476791A53E19900894457 /* Base */,
+			);
+			name = LaunchScreen.xib;
+			sourceTree = "<group>";
+		};
+		4C4438D41A5407C800176535 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4C4438D51A5407C800176535 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		4C0476871A53E19900894457 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		4C0476881A53E19900894457 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		4C04768A1A53E19900894457 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_FILE = DoctorSync/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_NAME = DoctorSync;
+			};
+			name = Debug;
+		};
+		4C04768B1A53E19900894457 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				INFOPLIST_FILE = DoctorSync/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_NAME = DoctorSync;
+			};
+			name = Release;
+		};
+		4C4438DD1A5407C800176535 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/DoctorSync.app/DoctorSync";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Tests/TheSpectacularSyncEngineTests-Prefix.pch";
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = "Tests/TheSpectacularSyncEngineTests-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				PRODUCT_NAME = TheSpectacularSyncEngineTests;
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = xctest;
+			};
+			name = Debug;
+		};
+		4C4438DE1A5407C800176535 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/DoctorSync.app/DoctorSync";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "Tests/TheSpectacularSyncEngineTests-Prefix.pch";
+				INFOPLIST_FILE = "Tests/TheSpectacularSyncEngineTests-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
+				PRODUCT_NAME = TheSpectacularSyncEngineTests;
+				TEST_HOST = "$(BUNDLE_LOADER)";
+				WRAPPER_EXTENSION = xctest;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4C0476611A53E19900894457 /* Build configuration list for PBXProject "TheSpectacularSyncEngine" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C0476871A53E19900894457 /* Debug */,
+				4C0476881A53E19900894457 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4C0476891A53E19900894457 /* Build configuration list for PBXNativeTarget "Doctor Sync" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C04768A1A53E19900894457 /* Debug */,
+				4C04768B1A53E19900894457 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4C4438DC1A5407C800176535 /* Build configuration list for PBXNativeTarget "TheSpectacularSyncEngineTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C4438DD1A5407C800176535 /* Debug */,
+				4C4438DE1A5407C800176535 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4C04765E1A53E19900894457 /* Project object */;
+}
