@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-@import Foundation;
+#import <Foundation/Foundation.h>
 #import <mach/mach_time.h>
 
 typedef enum {
@@ -90,6 +90,14 @@ double SEHostTicksToBeats(uint64_t ticks, double tempo);
  */
 uint64_t SEBeatsToHostTicks(double beats, double tempo);
 
+/*!
+ * Weak-retaining proxy for retain cycle-free use of NSTimer
+ */
+@interface SEWeakRetainingProxy : NSProxy
+-(instancetype)initWithTarget:(id)target;
+@property (nonatomic, weak) id target;
+@end
+    
 #ifdef __cplusplus
 }
 #endif

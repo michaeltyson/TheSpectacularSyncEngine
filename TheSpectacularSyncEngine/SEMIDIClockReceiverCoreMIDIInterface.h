@@ -11,9 +11,7 @@ extern "C" {
 #endif
 
 #import "SEMIDIClockReceiver.h"
-#import <CoreMIDI/CoreMIDI.h>
-    
-@class SEMIDIClockReceiverCoreMIDISource;
+#import "SECoreMIDICommon.h"
     
 /*!
  * Core MIDI utility class for SEMIDIClockReceiver
@@ -30,7 +28,7 @@ extern "C" {
  *  manually, then  pass MIDI messages via SEMIDIClockReceiver's receivePacketList:.
  *
  *  Use the availableSources property to obtain a list of sources you can
- *  receive from (of type SEMIDIClockReceiverCoreMIDISource). Select the source
+ *  receive from (of type SEMIDIEndpoint). Select the source
  *  you wish to use, then assign it to the source property to immediately begin 
  *  listening. If the source property is nil, then this class will automatically
  *  receive from the virtual destination (used to receive messages from other apps,
@@ -65,7 +63,7 @@ extern "C" {
 @property (nonatomic, readonly) MIDIEndpointRef virtualDestination;
 
 /*!
- * The list of available sources, an array of SEMIDIClockReceiverCoreMIDISource
+ * The list of available sources, an array of SEMIDIEndpoint
  *
  *  This property issues key-value observing notifications, when new sources
  *  become available, or existing sources become unavailable.
@@ -75,29 +73,10 @@ extern "C" {
 /*!
  * The source to receive from
  */
-@property (nonatomic, copy) SEMIDIClockReceiverCoreMIDISource *source;
+@property (nonatomic, strong) SEMIDIEndpoint *source;
 
 @end
-    
-/*!
- * MIDI source utility class
- *
- *  This class represents a single Core MIDI source
- */
-@interface SEMIDIClockReceiverCoreMIDISource : NSObject
 
-/*!
- * The display name for the endpoint
- */
-@property (nonatomic, strong, readonly) NSString * name;
-
-/*!
- * The MIDI endpoint
- */
-@property (nonatomic, readonly) MIDIEndpointRef endpoint;
-
-@end
-    
 #ifdef __cplusplus
 }
 #endif

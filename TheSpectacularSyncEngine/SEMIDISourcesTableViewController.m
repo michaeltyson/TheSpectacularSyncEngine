@@ -58,18 +58,11 @@ static void * kAvailableSourcesChanged = &kAvailableSourcesChanged;
 #pragma mark - Table view data source
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 2;
+    return 1;
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    switch ( section ) {
-        case 0:
-            return 1;
-        case 1:
-            return self.sources.count;
-        default:
-            return 0;
-    }
+    return self.sources.count;
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -79,22 +72,16 @@ static void * kAvailableSourcesChanged = &kAvailableSourcesChanged;
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
+
+    SEMIDIEndpoint * source = self.sources[indexPath.row];
+    cell.textLabel.text = source.name;
     
-    switch ( indexPath.section ) {
-        case 0: {
-            cell.textLabel.text = NSLocalizedString(@"Virtual MIDI Source", @"Title");
-            cell.accessoryType = _interface.source == NULL ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-            break;
-        }
-        case 1: {
-            SEMIDIClockReceiverCoreMIDISource * source = self.sources[indexPath.row];
-            cell.textLabel.text = source.name;
-            cell.accessoryType = [_interface.source isEqual:source] ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
-            break;
-        }
-        default:
-            break;
-    }
+    // Show as connected the actually-selected source, plus any connected network hosts if our source is another network host
+    cell.accessoryType = [_interface.source isEqual:source]
+                            || ([source isKindOfClass:[SEMIDINetworkEndpoint class]]
+                                    && _interface.source.endpoint == source.endpoint
+                                    && ((SEMIDINetworkEndpoint*)source).connected)
+                            ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
     
     return cell;
 }
@@ -102,7 +89,18 @@ static void * kAvailableSourcesChanged = &kAvailableSourcesChanged;
 -(void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     [tableView deselectRowAtIndexPath:indexPath animated:NO];
     
-    _interface.source = indexPath.section == 0 ? NULL : self.sources[indexPath.row];
+    SEMIDIEndpoint * source = self.sources[indexPath.row];
+    
+    if ( [_interface.source isEqual:source] ) {
+        // Disable source
+        _interface.source = nil;
+    } else if ( [source isKindOfClass:[SEMIDINetworkEndpoint class]] && _interface.source.endpoint == source.endpoint && ((SEMIDINetworkEndpoint*)source).connected ) {
+        // Disconnect a connected network source that isn't our actual source
+        [source disconnect];
+    } else {
+        // Select this source
+        _interface.source = source;
+    }
     
     [tableView reloadData];
 }

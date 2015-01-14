@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 #import "SEMIDIClockSender.h"
-#import <CoreMIDI/CoreMIDI.h>
+#import "SECoreMIDICommon.h"
 
 /*!
  * Core MIDI interface for SEMIDIClockSender
@@ -28,7 +28,7 @@ extern "C" {
  *  your own Core MIDI port/endpoint, if you have an existing setup.
  *
  *  Either way, use the availableDestinations property to obtain a list of
- *  destinations you can send to (of type SEMIDIClockSenderCoreMIDIDestination).
+ *  destinations you can send to (of type SEMIDIEndpoint).
  *  Select the destinations you wish to use, then assign them, within an array,
  *  to the destinations property to immediately begin sending.
  */
@@ -65,7 +65,7 @@ extern "C" {
 @property (nonatomic, readonly) MIDIEndpointRef virtualSource;
 
 /*!
- * The list of available destinations, an array of SEMIDIClockSenderCoreMIDIDestination
+ * The list of available destinations, an array of SEMIDIEndpoint
  *
  *  This property issues key-value observing notifications, when new destinations
  *  become available, or existing destinations become unavailable.
@@ -75,28 +75,9 @@ extern "C" {
 /*!
  * The destinations to send to
  *
- *  This must be an array of SEMIDIClockSenderCoreMIDIDestination
+ *  This must be an array of SEMIDIEndpoint
  */
-@property (copy) NSArray *destinations;
-
-@end
-
-/*!
- * MIDI destination utility class
- *
- *  This class represents a single Core MIDI destination
- */
-@interface SEMIDIClockSenderCoreMIDIDestination : NSObject
-
-/*!
- * The display name for the endpoint
- */
-@property (nonatomic, strong, readonly) NSString * name;
-
-/*!
- * The MIDI endpoint
- */
-@property (nonatomic, readonly) MIDIEndpointRef endpoint;
+@property (nonatomic, copy) NSArray *destinations;
 
 @end
 

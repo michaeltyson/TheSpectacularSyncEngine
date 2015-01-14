@@ -63,6 +63,9 @@
     
     [[UIApplication sharedApplication] setIdleTimerDisabled:YES];
     
+    [MIDINetworkSession defaultSession].enabled = YES;
+    [MIDINetworkSession defaultSession].connectionPolicy = MIDINetworkConnectionPolicy_Anyone;
+    
     if ( [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone ) {
         [[UIApplication sharedApplication] setStatusBarHidden:YES];
     }

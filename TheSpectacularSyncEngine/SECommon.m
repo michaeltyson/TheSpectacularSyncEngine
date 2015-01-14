@@ -58,3 +58,20 @@ double SEHostTicksToBeats(uint64_t ticks, double tempo) {
 uint64_t SEBeatsToHostTicks(double beats, double tempo) {
     return beats * (SESecondsToHostTicks(60.0) / tempo);
 }
+
+
+#pragma mark - Weak retaining proxy for timers
+
+@implementation SEWeakRetainingProxy
+-(instancetype)initWithTarget:(id)target {
+    self.target = target;
+    return self;
+}
+-(NSMethodSignature *)methodSignatureForSelector:(SEL)selector {
+    return [_target methodSignatureForSelector:selector];
+}
+-(void)forwardInvocation:(NSInvocation *)invocation {
+    [invocation setTarget:_target];
+    [invocation invoke];
+}
+@end

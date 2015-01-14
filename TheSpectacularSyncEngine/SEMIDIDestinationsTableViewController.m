@@ -9,13 +9,14 @@
 #import "SEMIDIDestinationsTableViewController.h"
 #import "SEMIDIClockSenderCoreMIDIInterface.h"
 
-static void * kAvailableDestinationsChanged = &kAvailableDestinationsChanged;
+static void * kDestinationsChanged = &kDestinationsChanged;
 
 @interface SEMIDIDestinationsTableViewController ()
 @property (nonatomic) NSArray *destinations;
 @end
 
 @implementation SEMIDIDestinationsTableViewController
+@synthesize destinations = _destinations;
 
 -(instancetype)init {
     if ( !(self = [super initWithStyle:UITableViewStyleGrouped]) ) return nil;
@@ -23,27 +24,21 @@ static void * kAvailableDestinationsChanged = &kAvailableDestinationsChanged;
 }
 
 -(void)dealloc {
+    self.destinations = nil;
     self.interface = nil;
 }
 
 -(void)setInterface:(SEMIDIClockSenderCoreMIDIInterface *)interface {
     if ( _interface ) {
         [_interface removeObserver:self forKeyPath:@"availableDestinations"];
+        [_interface removeObserver:self forKeyPath:@"destinations"];
     }
     
     _interface = interface;
     
     if ( _interface ) {
-        [_interface addObserver:self forKeyPath:@"availableDestinations" options:0 context:kAvailableDestinationsChanged];
-    }
-}
-
--(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    if ( context == kAvailableDestinationsChanged ) {
-        self.destinations = nil;
-        [self.tableView reloadData];
-    } else {
-        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+        [_interface addObserver:self forKeyPath:@"availableDestinations" options:0 context:kDestinationsChanged];
+        [_interface addObserver:self forKeyPath:@"destinations" options:0 context:kDestinationsChanged];
     }
 }
 
@@ -55,19 +50,23 @@ static void * kAvailableDestinationsChanged = &kAvailableDestinationsChanged;
     return _destinations;
 }
 
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    if ( context == kDestinationsChanged ) {
+        self.destinations = nil;
+        [self.tableView reloadData];
+    } else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
+}
+
 #pragma mark - Table view data destination
 
 -(NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return 2;
+    return 1;
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    switch ( section ) {
-        case 0:
-            return self.destinations.count;
-        default:
-            return 0;
-    }
+    return self.destinations.count;
 }
 
 -(UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -78,7 +77,7 @@ static void * kAvailableDestinationsChanged = &kAvailableDestinationsChanged;
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
     
-    SEMIDIClockSenderCoreMIDIDestination * destination = self.destinations[indexPath.row];
+    SEMIDIEndpoint * destination = self.destinations[indexPath.row];
     cell.textLabel.text = destination.name;
     cell.accessoryType = [_interface.destinations containsObject:destination] ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
     

@@ -11,7 +11,7 @@
 #import <libkern/OSAtomic.h>
 
 #ifdef DEBUG
-#define DEBUG_LOGGING
+// #define DEBUG_LOGGING
 #endif
 
 NSString * const SEMIDIClockReceiverDidStartTempoSyncNotification = @"SEMIDIClockReceiverDidStartTempoSyncNotification";
@@ -64,11 +64,6 @@ typedef enum {
     SEMIDIClockReceiverActionContinue,
     SEMIDIClockReceiverActionSeek
 } SEMIDIClockReceiverAction;
-
-@interface SEMIDIClockReceiverProxy : NSProxy
--(instancetype)initWithTarget:(SEMIDIClockReceiver*)target;
-@property (nonatomic, weak) SEMIDIClockReceiver * target;
-@end
 
 @interface SEMIDIClockReceiver () {
     int _tickCount;
@@ -245,7 +240,7 @@ typedef enum {
                     
                     _sampleCountSinceLastTempoUpdate++;
                     
-                    if ( !_tempo || (fabs(_tempo - tempo) >= kTempoChangeUpdateThreshold) ) {
+                    if ( !_receivingTempo || !_tempo || (fabs(_tempo - tempo) >= kTempoChangeUpdateThreshold) ) {
                         // A significant tempo change happened. Report it (with rate limiting)
                         BOOL reportUpdate = NO;
                         
@@ -353,7 +348,7 @@ typedef enum {
                     dispatch_async(dispatch_get_main_queue(), ^{
                         if ( !_timeout ) {
                             self.timeout = [NSTimer scheduledTimerWithTimeInterval:0.5
-                                                                            target:[[SEMIDIClockReceiverProxy alloc] initWithTarget:self]
+                                                                            target:[[SEWeakRetainingProxy alloc] initWithTarget:self]
                                                                           selector:@selector(checkTimeout:)
                                                                           userInfo:nil
                                                                            repeats:YES];
@@ -636,20 +631,4 @@ static void _SEMIDIClockReceiverSampleBufferAddSampleToBuffer(SEMIDIClockReceive
     }
 }
 
-@end
-
-#pragma mark - Weak retaining proxy for timer
-
-@implementation SEMIDIClockReceiverProxy
--(instancetype)initWithTarget:(SEMIDIClockReceiver*)target {
-    self.target = target;
-    return self;
-}
--(NSMethodSignature *)methodSignatureForSelector:(SEL)selector {
-    return [_target methodSignatureForSelector:selector];
-}
--(void)forwardInvocation:(NSInvocation *)invocation {
-    [invocation setTarget:_target];
-    [invocation invoke];
-}
 @end

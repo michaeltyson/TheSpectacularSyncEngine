@@ -7,16 +7,9 @@
 //
 
 #import "SEMIDIClockReceiverCoreMIDIInterface.h"
+#import "SEMIDINetworkMonitor.h"
 
-#define checkResult(result,operation) (_checkResult((result),(operation),strrchr(__FILE__, '/')+1,__LINE__))
-static inline BOOL _checkResult(OSStatus result, const char *operation, const char* file, int line) {
-    if ( result != noErr ) {
-        int fourCC = CFSwapInt32HostToBig(result);
-        NSLog(@"%s:%d: %s result %d %08X %4.4s\n", file, line, operation, (int)result, (int)result, (char*)&fourCC);
-        return NO;
-    }
-    return YES;
-}
+static void * kNetworkContactsChanged = &kNetworkContactsChanged;
 
 @interface SEMIDIClockReceiverCoreMIDIInterface () {
     MIDIClientRef _midiClient;
@@ -26,10 +19,6 @@ static inline BOOL _checkResult(OSStatus result, const char *operation, const ch
 @property (nonatomic, readwrite) MIDIEndpointRef virtualDestination;
 @end
 
-@interface SEMIDIClockReceiverCoreMIDISource ()
--(instancetype)initWithEndpoint:(MIDIEndpointRef)endpoint;
-@end
-
 @implementation SEMIDIClockReceiverCoreMIDIInterface
 
 -(instancetype)initWithReceiver:(SEMIDIClockReceiver *)receiver {
@@ -37,17 +26,16 @@ static inline BOOL _checkResult(OSStatus result, const char *operation, const ch
     
     self.receiver = receiver;
     
-    if ( !checkResult(MIDIClientCreate((__bridge CFStringRef)@"SEMIDIClockReceiver MIDI Client", midiNotify, (__bridge void*)self, &_midiClient), "MIDIClientCreate") ) {
+    if ( !SECheckResult(MIDIClientCreate((__bridge CFStringRef)@"SEMIDIClockReceiver MIDI Client", midiNotify, (__bridge void*)self, &_midiClient), "MIDIClientCreate") ) {
         return nil;
     }
     
-    if ( !checkResult(MIDIInputPortCreate(_midiClient, (__bridge CFStringRef)@"SEMIDIClockReceiver MIDI Port", midiRead, (__bridge void*)self, &_inputPort), "MIDIInputPortCreate") ) {
+    if ( !SECheckResult(MIDIInputPortCreate(_midiClient, (__bridge CFStringRef)@"SEMIDIClockReceiver MIDI Port", midiRead, (__bridge void*)self, &_inputPort), "MIDIInputPortCreate") ) {
         MIDIClientDispose(_midiClient);
         return nil;
     }
     
-    
-    if ( checkResult(MIDIDestinationCreate(_midiClient, (__bridge CFStringRef)self.virtualDestinationEndpointName, midiRead, (__bridge void*)self, &_virtualDestination), "MIDIDestinationCreate") ) {
+    if ( SECheckResult(MIDIDestinationCreate(_midiClient, (__bridge CFStringRef)self.virtualDestinationEndpointName, midiRead, (__bridge void*)self, &_virtualDestination), "MIDIDestinationCreate") ) {
         
         // Try to persist unique ID
         SInt32 uniqueID = (SInt32)[[NSUserDefaults standardUserDefaults] integerForKey:@"SEMIDIClockReceiver Unique ID"];
@@ -57,47 +45,85 @@ static inline BOOL _checkResult(OSStatus result, const char *operation, const ch
             }
         }
         if ( !uniqueID ) {
-            if ( checkResult(MIDIObjectGetIntegerProperty(_virtualDestination, kMIDIPropertyUniqueID, &uniqueID), "MIDIObjectGetIntegerProperty") ) {
+            if ( SECheckResult(MIDIObjectGetIntegerProperty(_virtualDestination, kMIDIPropertyUniqueID, &uniqueID), "MIDIObjectGetIntegerProperty") ) {
                 [[NSUserDefaults standardUserDefaults] setInteger:uniqueID forKey:@"SEMIDIClockReceiver Unique ID"];
             }
         }
     }
-
+    
+    self.source = [[SEMIDIEndpoint alloc] initWithEndpoint:_virtualDestination];
+    
+    // Watch for changes to network contacts and connections
+    [[SEMIDINetworkMonitor sharedNetworkMonitor] addObserver:self forKeyPath:@"contacts" options:0 context:kNetworkContactsChanged];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(networkConnectionsChanged:) name:MIDINetworkNotificationSessionDidChange object:nil];
+    
     return self;
 }
 
 -(void)dealloc {
-    if ( _source ) MIDIPortDisconnectSource(_inputPort, _source.endpoint);
+    [[SEMIDINetworkMonitor sharedNetworkMonitor] removeObserver:self forKeyPath:@"contacts"];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    self.source = NULL;
     if ( _virtualDestination ) MIDIEndpointDispose(_virtualDestination);
     MIDIPortDispose(_inputPort);
     MIDIClientDispose(_midiClient);
 }
 
 -(NSArray *)availableSources {
+    MIDINetworkSession *netSession = [MIDINetworkSession defaultSession];
     NSMutableArray * sources = [NSMutableArray array];
+    
+    [sources addObject:[[SEMIDIEndpoint alloc] initWithEndpoint:_virtualDestination name:NSLocalizedString(@"Virtual MIDI Source", @"")]];
+    
     ItemCount sourceCount = MIDIGetNumberOfSources();
     for ( ItemCount i=0; i<sourceCount; i++ ) {
         MIDIEndpointRef endpoint = MIDIGetSource(i);
-        if ( endpoint == _virtualDestination ) continue;
+        if ( endpoint == netSession.sourceEndpoint ) {
+            continue;
+        }
         
-        SEMIDIClockReceiverCoreMIDISource *source = [[SEMIDIClockReceiverCoreMIDISource alloc] initWithEndpoint:endpoint];
-        if ( [source.name isEqualToString:self.virtualDestinationEndpointName] ) continue;
+        SEMIDIEndpoint *source = [[SEMIDIEndpoint alloc] initWithEndpoint:endpoint];
         
+        if ( [source.name isEqualToString:self.virtualDestinationEndpointName] ) {
+            continue;
+        }
+    
         [sources addObject:source];
     }
+    
+    if ( netSession.isEnabled ) {
+        for ( MIDINetworkHost * host in [SEMIDINetworkMonitor sharedNetworkMonitor].contacts ) {
+            SEMIDINetworkEndpoint *source = [[SEMIDINetworkEndpoint alloc] initWithEndpoint:netSession.sourceEndpoint host:host];
+            [sources addObject:source];
+        }
+    }
+    
     return sources;
 }
 
--(void)setSource:(SEMIDIClockReceiverCoreMIDISource *)source {
-    if ( _source ) {
-        checkResult(MIDIPortDisconnectSource(_inputPort, _source.endpoint), "MIDIPortDisconnectSource");
+-(void)setSource:(SEMIDIEndpoint *)source {
+    if ( _source == source ) return;
+    
+    if ( _source && _source.endpoint != _virtualDestination ) {
+        SECheckResult(MIDIPortDisconnectSource(_inputPort, _source.endpoint), "MIDIPortDisconnectSource");
+        [source disconnect]; // Perform any source-specfic disconnection tasks
     }
     
-    _source = [source copy];
+    if ( [source isKindOfClass:[SEMIDINetworkEndpoint class]] ) {
+        // If new source is network, look through available sources and disconnect any network sources that aren't our new source
+        for ( SEMIDIEndpoint * availableSource in self.availableSources ) {
+            if ( [availableSource isKindOfClass:[SEMIDINetworkEndpoint class]] && ![availableSource isEqual:source] && ((SEMIDINetworkEndpoint*)availableSource).connected ) {
+                [availableSource disconnect];
+            }
+        }
+    }
+    
+    _source = source;
     [_receiver reset];
     
-    if ( _source ) {
-        checkResult(MIDIPortConnectSource(_inputPort, _source.endpoint, (__bridge void*)_source), "MIDIPortConnectSource");
+    if ( _source && _source.endpoint != _virtualDestination ) {
+        SECheckResult(MIDIPortConnectSource(_inputPort, _source.endpoint, (__bridge void*)_source), "MIDIPortConnectSource");
+        [source connect]; // Perform any source-specfic connection tasks
     }
 }
 
@@ -109,7 +135,7 @@ static void midiNotify(const MIDINotification * message, void * inRefCon) {
         case kMIDIMsgObjectRemoved: {
             if ( message->messageID == kMIDIMsgObjectRemoved ) {
                 MIDIObjectAddRemoveNotification * notification = (MIDIObjectAddRemoveNotification *)message;
-                SEMIDIClockReceiverCoreMIDISource * source = [[SEMIDIClockReceiverCoreMIDISource alloc] initWithEndpoint:notification->child];
+                SEMIDIEndpoint * source = [[SEMIDIEndpoint alloc] initWithEndpoint:notification->child];
                 if ( [THIS.source isEqual:source] ) {
                     THIS.source = nil;
                 }
@@ -120,7 +146,7 @@ static void midiNotify(const MIDINotification * message, void * inRefCon) {
             });
             break;
         }
-            
+        
         default:
             break;
     }
@@ -128,8 +154,7 @@ static void midiNotify(const MIDINotification * message, void * inRefCon) {
 
 static void midiRead(const MIDIPacketList * pktlist, void * readProcRefCon, void * srcConnRefCon) {
     SEMIDIClockReceiverCoreMIDIInterface * THIS = (__bridge SEMIDIClockReceiverCoreMIDIInterface*)readProcRefCon;
-    if ( srcConnRefCon != (__bridge void*)THIS->_source ) {
-        // Ignore messages coming from other sources
+    if ( !THIS->_source ) {
         return;
     }
     
@@ -142,37 +167,20 @@ static void midiRead(const MIDIPacketList * pktlist, void * readProcRefCon, void
     return virtualDestinationName;
 }
 
-@end
-
-@implementation SEMIDIClockReceiverCoreMIDISource
-@dynamic name;
-
--(instancetype)initWithEndpoint:(MIDIEndpointRef)endpoint {
-    if ( !(self = [super init]) ) return nil;
-    
-    _endpoint = endpoint;
-    
-    return self;
-}
-
--(BOOL)isEqual:(id)object {
-    return [object isKindOfClass:[self class]] && ((SEMIDIClockReceiverCoreMIDISource*)object).endpoint == _endpoint;
-}
-
--(NSUInteger)hash {
-    return (NSUInteger)_endpoint;
-}
-
--(id)copyWithZone:(NSZone*)zone {
-    return [[SEMIDIClockReceiverCoreMIDISource allocWithZone:zone] initWithEndpoint:_endpoint];
-}
-
--(NSString *)name {
-    CFStringRef name = NULL;
-    if ( !checkResult(MIDIObjectGetStringProperty(_endpoint, kMIDIPropertyDisplayName, &name), "MIDIObjectGetStringProperty") ) {
-        return nil;
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    if ( context == kNetworkContactsChanged ) {
+        // Network contacts list changed; announce corresponding change to available sources list
+        [self willChangeValueForKey:@"availableSources"];
+        [self didChangeValueForKey:@"availableSources"];
+    } else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
     }
-    return (__bridge_transfer NSString*)name;
+}
+
+-(void)networkConnectionsChanged:(NSNotification*)notification {
+    // Network connections changed; announce corresponding change to available sources list
+    [self willChangeValueForKey:@"availableSources"];
+    [self didChangeValueForKey:@"availableSources"];
 }
 
 @end
