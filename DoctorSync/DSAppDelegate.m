@@ -63,6 +63,10 @@
     
     [[UIApplication sharedApplication] setIdleTimerDisabled:YES];
     
+    if ( [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone ) {
+        [[UIApplication sharedApplication] setStatusBarHidden:YES];
+    }
+    
     return YES;
 }
 
