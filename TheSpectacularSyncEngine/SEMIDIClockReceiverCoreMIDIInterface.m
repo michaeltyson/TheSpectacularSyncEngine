@@ -161,6 +161,8 @@ static void midiRead(const MIDIPacketList * pktlist, void * readProcRefCon, void
     BOOL isVirtualMIDISource = srcConnRefCon == NULL;
     if ( isVirtualMIDISource && THIS->_source.endpoint != THIS->_virtualDestination ) {
         return;
+    } else if ( !isVirtualMIDISource && THIS->_source.endpoint != (MIDIEndpointRef)srcConnRefCon ) {
+        return;
     }
     
     [THIS->_receiver receivePacketList:pktlist];
