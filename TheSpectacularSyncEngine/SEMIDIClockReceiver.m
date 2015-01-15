@@ -439,6 +439,7 @@ typedef enum {
     if ( _timeBase ) {
         [self willChangeValueForKey:@"clockRunning"];
         _timeBase = 0;
+        _clockRunning = NO;
         [self didChangeValueForKey:@"clockRunning"];
         
         [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStopNotification
@@ -514,6 +515,7 @@ double SEMIDIClockReceiverGetTempo(__unsafe_unretained SEMIDIClockReceiver * rec
         if ( _timeBase ) {
             [self willChangeValueForKey:@"clockRunning"];
             _timeBase = 0;
+            _clockRunning = NO;
             [self didChangeValueForKey:@"clockRunning"];
             
             [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStopNotification

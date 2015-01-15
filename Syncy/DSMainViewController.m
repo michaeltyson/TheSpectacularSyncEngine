@@ -220,9 +220,11 @@ static const double kTempoDragVelocity = 0.15;
     
     if ( _receiver.receivingTempo && !_updateTimer ) {
         self.updateTimer = [NSTimer scheduledTimerWithTimeInterval:0.05 target:self selector:@selector(update) userInfo:nil repeats:YES];
-    } else if ( !_receiver.receivingTempo && !_metronome.started && _updateTimer ) {
-        [_updateTimer invalidate];
-        self.updateTimer = nil;
+    } else if ( !_receiver.receivingTempo ) {
+        if ( _updateTimer ) {
+            [_updateTimer invalidate];
+            self.updateTimer = nil;
+        }
         _stabilityLabel.hidden = YES;
     }
     
