@@ -69,6 +69,7 @@ typedef enum {
     int _tickCount;
     uint64_t _lastTick;
     uint64_t _timeBase;
+    uint64_t _lastTickReceiveTime;
     BOOL _clockRunning;
     BOOL _receivingTempo;
     SEMIDIClockReceiverAction _primedAction;
@@ -205,6 +206,7 @@ typedef enum {
                 
                 uint64_t previousTick = _lastTick;
                 _lastTick = timestamp;
+                _lastTickReceiveTime = SECurrentTimeInHostTicks();
                 
                 if ( previousTick ) {
                     
@@ -365,6 +367,7 @@ typedef enum {
 -(void)reset {
     [self willChangeValueForKey:@"receivingTempo"];
     _lastTick = 0;
+    _lastTickReceiveTime = 0;
     _tickCount = 0;
     _receivingTempo = NO;
     _savedSongPosition = 0;
@@ -389,7 +392,7 @@ typedef enum {
 }
 
 BOOL SEMIDIClockReceiverIsReceivingTempo(__unsafe_unretained SEMIDIClockReceiver * receiver) {
-    return receiver->_lastTick && receiver->_lastTick >= SECurrentTimeInHostTicks() - SESecondsToHostTicks(0.5);
+    return receiver->_lastTickReceiveTime && receiver->_lastTickReceiveTime >= SECurrentTimeInHostTicks() - SESecondsToHostTicks(0.5);
 }
 
 BOOL SEMIDIClockReceiverIsClockRunning(__unsafe_unretained SEMIDIClockReceiver * receiver) {
@@ -431,7 +434,7 @@ double SEMIDIClockReceiverGetTempo(__unsafe_unretained SEMIDIClockReceiver * rec
 }
 
 -(void)checkTimeout:(NSTimer*)timer {
-    if ( _lastTick && _lastTick < SECurrentTimeInHostTicks() - SESecondsToHostTicks(0.5) ) {
+    if ( _lastTickReceiveTime && _lastTickReceiveTime < SECurrentTimeInHostTicks() - SESecondsToHostTicks(0.5) ) {
         
         // Timed out
         [_timeout invalidate];
@@ -440,6 +443,7 @@ double SEMIDIClockReceiverGetTempo(__unsafe_unretained SEMIDIClockReceiver * rec
         [self willChangeValueForKey:@"receivingTempo"];
         _tickCount = 0;
         _lastTick = 0;
+        _lastTickReceiveTime = 0;
         _receivingTempo = NO;
         _sampleCountSinceLastTempoUpdate = 0;
         SEMIDIClockReceiverSampleBufferClear(&_tickSampleBuffer);
