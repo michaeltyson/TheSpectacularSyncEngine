@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 #import "SEMIDIClockSender.h"
-#import "SECoreMIDICommon.h"
+#import "SEMIDIEndpoint.h"
 
 /*!
  * Core MIDI interface for SEMIDIClockSender

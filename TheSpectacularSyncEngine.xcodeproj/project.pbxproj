@@ -37,8 +37,8 @@
 		4C6CCF881A64A52F0015EC2F /* SEMIDINetworkMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C6CCF861A64A52F0015EC2F /* SEMIDINetworkMonitor.m */; };
 		4C8D302F1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C8D302E1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m */; };
 		4CC0C7C91A55486A004AC6FE /* DSBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CC0C7C81A55486A004AC6FE /* DSBackgroundView.m */; };
-		4CCC54831A64EA1500B2706D /* SECoreMIDICommon.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CCC54821A64EA1500B2706D /* SECoreMIDICommon.m */; };
-		4CCC54841A64EA1500B2706D /* SECoreMIDICommon.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CCC54821A64EA1500B2706D /* SECoreMIDICommon.m */; };
+		4CCC54831A64EA1500B2706D /* SEMIDIEndpoint.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CCC54821A64EA1500B2706D /* SEMIDIEndpoint.m */; };
+		4CCC54841A64EA1500B2706D /* SEMIDIEndpoint.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CCC54821A64EA1500B2706D /* SEMIDIEndpoint.m */; };
 		4CD2FA5D1A5CCF1500070D06 /* DSPlayPauseButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD2FA5C1A5CCF1500070D06 /* DSPlayPauseButton.m */; };
 		4CD2FA601A5CDAFE00070D06 /* DSMetronome.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD2FA5F1A5CDAFE00070D06 /* DSMetronome.m */; };
 		4CD2FA651A5D21EC00070D06 /* TPDismissSegue.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD2FA641A5D21EC00070D06 /* TPDismissSegue.m */; };
@@ -100,8 +100,8 @@
 		4C8D302E1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEMIDIClockReceiverTests.m; sourceTree = "<group>"; };
 		4CC0C7C71A55486A004AC6FE /* DSBackgroundView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSBackgroundView.h; sourceTree = "<group>"; };
 		4CC0C7C81A55486A004AC6FE /* DSBackgroundView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSBackgroundView.m; sourceTree = "<group>"; };
-		4CCC54811A64EA1500B2706D /* SECoreMIDICommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SECoreMIDICommon.h; path = TheSpectacularSyncEngine/SECoreMIDICommon.h; sourceTree = "<group>"; };
-		4CCC54821A64EA1500B2706D /* SECoreMIDICommon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SECoreMIDICommon.m; path = TheSpectacularSyncEngine/SECoreMIDICommon.m; sourceTree = "<group>"; };
+		4CCC54811A64EA1500B2706D /* SEMIDIEndpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDIEndpoint.h; path = TheSpectacularSyncEngine/SEMIDIEndpoint.h; sourceTree = "<group>"; };
+		4CCC54821A64EA1500B2706D /* SEMIDIEndpoint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDIEndpoint.m; path = TheSpectacularSyncEngine/SEMIDIEndpoint.m; sourceTree = "<group>"; };
 		4CD2FA5B1A5CCF1500070D06 /* DSPlayPauseButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSPlayPauseButton.h; sourceTree = "<group>"; };
 		4CD2FA5C1A5CCF1500070D06 /* DSPlayPauseButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSPlayPauseButton.m; sourceTree = "<group>"; };
 		4CD2FA5E1A5CDAFE00070D06 /* DSMetronome.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSMetronome.h; sourceTree = "<group>"; };
@@ -187,8 +187,8 @@
 			children = (
 				4C27A8681A5F690800BE0518 /* SECommon.h */,
 				4C27A8691A5F690800BE0518 /* SECommon.m */,
-				4CCC54811A64EA1500B2706D /* SECoreMIDICommon.h */,
-				4CCC54821A64EA1500B2706D /* SECoreMIDICommon.m */,
+				4CCC54811A64EA1500B2706D /* SEMIDIEndpoint.h */,
+				4CCC54821A64EA1500B2706D /* SEMIDIEndpoint.m */,
 				4C6CCF851A64A52F0015EC2F /* SEMIDINetworkMonitor.h */,
 				4C6CCF861A64A52F0015EC2F /* SEMIDINetworkMonitor.m */,
 				4C27A86A1A5F690800BE0518 /* SEMIDIClockReceiver.h */,
@@ -404,7 +404,7 @@
 				4CD2FA601A5CDAFE00070D06 /* DSMetronome.m in Sources */,
 				4C04766C1A53E19900894457 /* main.m in Sources */,
 				4C27A88A1A5F690800BE0518 /* SEMIDISourcesTableViewController.m in Sources */,
-				4CCC54831A64EA1500B2706D /* SECoreMIDICommon.m in Sources */,
+				4CCC54831A64EA1500B2706D /* SEMIDIEndpoint.m in Sources */,
 				4C27A87A1A5F690800BE0518 /* SECommon.m in Sources */,
 				4C27A87E1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m in Sources */,
 				4CDED2FD1A5BB37D0091ABAB /* DSTempoPulseView.m in Sources */,
@@ -417,7 +417,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4CCC54841A64EA1500B2706D /* SECoreMIDICommon.m in Sources */,
+				4CCC54841A64EA1500B2706D /* SEMIDIEndpoint.m in Sources */,
 				4C6CCF881A64A52F0015EC2F /* SEMIDINetworkMonitor.m in Sources */,
 				4C27A87D1A5F690800BE0518 /* SEMIDIClockReceiver.m in Sources */,
 				4C4438D81A5407C800176535 /* SEMIDIClockSenderTests.m in Sources */,

@@ -16,6 +16,16 @@ extern "C" {
 #import <Foundation/Foundation.h>
 #import <mach/mach_time.h>
 
+#define SECheckResult(result,operation) (_SECheckResult((result),(operation),strrchr(__FILE__, '/')+1,__LINE__))
+static inline BOOL _SECheckResult(OSStatus result, const char *operation, const char* file, int line) {
+    if ( result != noErr ) {
+        int fourCC = CFSwapInt32HostToBig(result);
+        NSLog(@"%s:%d: %s result %d %08X %4.4s\n", file, line, operation, (int)result, (int)result, (char*)&fourCC);
+        return NO;
+    }
+    return YES;
+}
+
 typedef enum {
     SEMIDIMessageSongPosition  = 0xF2,
     SEMIDIMessageClock         = 0xF8,

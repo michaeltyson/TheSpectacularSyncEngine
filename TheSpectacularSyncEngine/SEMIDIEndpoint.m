@@ -1,12 +1,12 @@
 //
-//  SECoreMIDICommon.m
+//  SEMIDIEndpoint.m
 //  TheSpectacularSyncEngine
 //
 //  Created by Michael Tyson on 13/01/2015.
 //  Copyright (c) 2015 A Tasty Pixel. All rights reserved.
 //
 
-#import "SECoreMIDICommon.h"
+#import "SEMIDIEndpoint.h"
 #import "SECommon.h"
 
 @interface SEMIDIEndpoint ()

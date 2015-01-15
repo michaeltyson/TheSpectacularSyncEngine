@@ -8,7 +8,7 @@
 
 #import "SEMIDIClockSenderCoreMIDIInterface.h"
 #import "SEMIDINetworkMonitor.h"
-#import "SECoreMIDICommon.h"
+#import "SEMIDIEndpoint.h"
 
 static void * kNetworkContactsChanged = &kNetworkContactsChanged;
 

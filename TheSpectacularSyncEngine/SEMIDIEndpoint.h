@@ -1,5 +1,5 @@
 //
-//  SECoreMIDICommon.h
+//  SEMIDIEndpoint.h
 //  TheSpectacularSyncEngine
 //
 //  Created by Michael Tyson on 13/01/2015.
@@ -9,15 +9,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreMIDI/CoreMIDI.h>
 
-#define SECheckResult(result,operation) (_SECheckResult((result),(operation),strrchr(__FILE__, '/')+1,__LINE__))
-static inline BOOL _SECheckResult(OSStatus result, const char *operation, const char* file, int line) {
-    if ( result != noErr ) {
-        int fourCC = CFSwapInt32HostToBig(result);
-        NSLog(@"%s:%d: %s result %d %08X %4.4s\n", file, line, operation, (int)result, (int)result, (char*)&fourCC);
-        return NO;
-    }
-    return YES;
-}
+
 
 /*!
  * MIDI endpoint utility class
@@ -32,7 +24,7 @@ static inline BOOL _SECheckResult(OSStatus result, const char *operation, const 
 -(instancetype)initWithEndpoint:(MIDIEndpointRef)endpoint;
 
 /*!
- * Initialize with a specific name
+ * Initialize with a specific name to show to user rather than endpoint's name
  */
 -(instancetype)initWithEndpoint:(MIDIEndpointRef)endpoint name:(NSString*)name;
 

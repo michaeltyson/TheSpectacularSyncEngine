@@ -11,7 +11,7 @@ extern "C" {
 #endif
 
 #import "SEMIDIClockReceiver.h"
-#import "SECoreMIDICommon.h"
+#import "SEMIDIEndpoint.h"
     
 /*!
  * Core MIDI utility class for SEMIDIClockReceiver
