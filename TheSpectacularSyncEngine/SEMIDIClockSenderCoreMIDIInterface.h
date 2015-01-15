@@ -24,8 +24,9 @@ extern "C" {
  *  automatically create Core MIDI ports and a virtual endpoint, named after
  *  your app's display name, for interaction with other apps.
  *
- *  If you use the initWithOutputPort:virtualSource: initialiser, you can use
- *  your own Core MIDI port/endpoint, if you have an existing setup.
+ *  If you have your own Core MIDI implementation already, use the 
+ *  initWithOutputPort:virtualSource: initialiser, which will stop this class
+ *  creating its own port and endpoint, and allow it to use your existing ones.
  *
  *  Either way, use the availableDestinations property to obtain a list of
  *  destinations you can send to (of type SEMIDIEndpoint).
@@ -50,7 +51,7 @@ extern "C" {
  *  initialiser to make this class use your existing ports.
  *
  * @param outputPort The MIDI output port to use (as created by MIDIOutputPortCreate)
- * @param virtualSource The MIDI virtual source to use (as created by MIDISourceCreate) - optional
+ * @param virtualSource The MIDI virtual source to use (as created by MIDISourceCreate)
  */
 -(instancetype)initWithOutputPort:(MIDIPortRef)outputPort virtualSource:(MIDIEndpointRef)virtualSource;
 

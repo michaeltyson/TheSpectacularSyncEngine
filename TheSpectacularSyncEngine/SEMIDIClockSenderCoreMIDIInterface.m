@@ -37,7 +37,7 @@ static void * kNetworkContactsChanged = &kNetworkContactsChanged;
     }
     
     MIDIEndpointRef virtualSource;
-    if ( SECheckResult(MIDISourceCreate(midiClient, (__bridge CFStringRef)self.virtualSourceEndpointName, &virtualSource), "MIDISourceCreate") ) {
+    if ( SECheckResult(MIDISourceCreate(midiClient, (__bridge CFStringRef)self.virtualEndpointName, &virtualSource), "MIDISourceCreate") ) {
         
         // Try to persist unique ID
         SInt32 uniqueID = (SInt32)[[NSUserDefaults standardUserDefaults] integerForKey:@"SEMIDIClockSender Unique ID"];
@@ -57,10 +57,6 @@ static void * kNetworkContactsChanged = &kNetworkContactsChanged;
     
     _portsAreOurs = YES;
     
-    // Watch for changes to network contacts and connections
-    [[SEMIDINetworkMonitor sharedNetworkMonitor] addObserver:self forKeyPath:@"contacts" options:0 context:kNetworkContactsChanged];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(networkConnectionsChanged:) name:MIDINetworkNotificationSessionDidChange object:nil];
-    
     return self;
 }
 
@@ -70,6 +66,9 @@ static void * kNetworkContactsChanged = &kNetworkContactsChanged;
 
 -(instancetype)initWithMIDIClient:(MIDIClientRef)midiClient outputPort:(MIDIPortRef)outputPort virtualSource:(MIDIEndpointRef)virtualSource {
     if ( !(self = [super init]) ) return nil;
+    
+    NSAssert(outputPort, @"You must provide an output port");
+    NSAssert(virtualSource, @"You must provide a Virtual MIDI source");
     
     _midiClient = midiClient;
     _outputPort = outputPort;
@@ -82,6 +81,10 @@ static void * kNetworkContactsChanged = &kNetworkContactsChanged;
         }
     }
     
+    // Watch for changes to network contacts and connections
+    [[SEMIDINetworkMonitor sharedNetworkMonitor] addObserver:self forKeyPath:@"contacts" options:0 context:kNetworkContactsChanged];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(networkConnectionsChanged:) name:MIDINetworkNotificationSessionDidChange object:nil];
+
     return self;
 }
 
@@ -108,7 +111,7 @@ static void * kNetworkContactsChanged = &kNetworkContactsChanged;
         
         SEMIDIEndpoint * destination = [[SEMIDIEndpoint alloc] initWithEndpoint:endpoint];
         
-        if ( [destination.name isEqualToString:self.virtualSourceEndpointName] ) {
+        if ( [destination.name isEqualToString:self.virtualEndpointName] ) {
             continue;
         }
         
@@ -226,10 +229,17 @@ static void midiNotify(const MIDINotification * message, void * inRefCon) {
     }
 }
 
-- (NSString*)virtualSourceEndpointName {
-    NSString *virtualSourceName = [NSBundle mainBundle].infoDictionary[@"CFBundleDisplayName"];
-    if ( !virtualSourceName ) virtualSourceName = [NSBundle mainBundle].infoDictionary[(__bridge NSString*)kCFBundleNameKey];
-    return virtualSourceName;
+- (NSString*)virtualEndpointName {
+    if ( _virtualSource ) {
+        CFStringRef name = NULL;
+        if ( SECheckResult(MIDIObjectGetStringProperty(_virtualSource, kMIDIPropertyDisplayName, &name), "MIDIObjectGetStringProperty") ) {
+            return (__bridge_transfer NSString*)name;
+        }
+    }
+    
+    NSString *virtualEndpointName = [NSBundle mainBundle].infoDictionary[@"CFBundleDisplayName"];
+    if ( !virtualEndpointName ) virtualEndpointName = [NSBundle mainBundle].infoDictionary[(__bridge NSString*)kCFBundleNameKey];
+    return virtualEndpointName;
 }
 
 -(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
