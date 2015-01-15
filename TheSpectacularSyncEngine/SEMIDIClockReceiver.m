@@ -40,9 +40,10 @@ static const int kOutliersBeforeReset                = 3;      // We need to see
 static const int kMinSamplesBeforeStoringStandardDeviation = 24; // Min samples to observe before we can start storing standard deviation history
 static const int kStandardDeviationHistorySamples    = 10;     // How many standard deviation history entries to keep
 static const int kStandardDeviationHistoryEntryDuration = 24;  // How many samples each history item contains
-static const double kMinStandardDeviationForRounding = 0.0001; // Perform tempo rounding when the relative std dev is beyond this level
-static const double kMaxStandardDeviationForTwoDecimal = 0.01; // Round to two decimal places when std dev is less than this
-static const double kMaxStandardDeviationForOneDecimal = 0.1;  // Round to one decimal place when std dev is less than this, and round to integers when beyond
+static const double kTrustedStandardDeviation        = 1.0e-4; // Standard deviation beneath which we consider a source totally stable
+static const int kMinSamplesBeforeRecordingTempoHistory = 13;  // Don't record tempo history if we've seen less than this number of (possibly unsteady) samples
+static const int kTempoHistoryLength                 = 10;     // Number of historical 1-second tempo bounds samples to keep, for picking the optimal stable rounding
+static const double kRoundingCoefficients[] = { 0.0001, 0.001, 0.01, 0.1, 0.5, 1.0 }; // Precisions to round to, depending on signal stability
 
 typedef struct {
     uint64_t samples[kSampleBufferSize+1];
@@ -55,6 +56,7 @@ typedef struct {
     int outlierCount;
     int seenSamples;
     int sampleCountSinceLastSignificantChange;
+    BOOL significantChange;
     uint64_t standardDeviationHistory[kStandardDeviationHistorySamples];
 } SEMIDIClockReceiverSampleBuffer;
 
@@ -79,6 +81,8 @@ typedef enum {
     SEMIDIClockReceiverSampleBuffer _tickSampleBuffer;
     SEMIDIClockReceiverSampleBuffer _timeBaseSampleBuffer;
     double _error;
+    struct { double min; double max; } _tempoHistory[kTempoHistoryLength];
+    int _lastTempoHistoryBucket;
 }
 @property (nonatomic) NSTimer * timeout;
 @end
@@ -92,6 +96,7 @@ typedef enum {
     
     SEMIDIClockReceiverSampleBufferClear(&_tickSampleBuffer);
     SEMIDIClockReceiverSampleBufferClear(&_timeBaseSampleBuffer);
+    for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
     
     return self;
 }
@@ -215,30 +220,82 @@ typedef enum {
                     
                     // Add to collected samples
                     SEMIDIClockReceiverSampleBufferIntegrateSample(&_tickSampleBuffer, interval);
+                    int samplesSinceChange = SEMIDIClockReceiverSampleBufferSamplesSinceLastSignificantChange(&_tickSampleBuffer);
+                    
+                    // Determine source's relative standard deviation
+                    double relativeStandardDeviation = ((double)SEMIDIClockReceiverSampleBufferStandardDeviation(&_tickSampleBuffer) / (double)interval) * 100.0;
+                    _error = relativeStandardDeviation;
                     
                     // Calculate true interval from samples, and convert to tempo
                     interval = SEMIDIClockReceiverSampleBufferCalculatedValue(&_tickSampleBuffer);
                     double tempo = (double)SESecondsToHostTicks(60.0) / (double)(interval * SEMIDITicksPerBeat);
                     
-                    // Determine sample's relative standard deviation
-                    double relativeStandardDeviation = ((double)SEMIDIClockReceiverSampleBufferStandardDeviation(&_tickSampleBuffer) / (double)interval) * 100.0;
-                    
-                    // Apply rounding, based on the error; thresholds determined empirically
-                    if ( relativeStandardDeviation > kMinStandardDeviationForRounding
-                            && relativeStandardDeviation < kMaxStandardDeviationForTwoDecimal ) {
-                        tempo = round(tempo / 0.01) * 0.01;
-                    } else if ( relativeStandardDeviation > kMaxStandardDeviationForTwoDecimal
-                            && relativeStandardDeviation < kMaxStandardDeviationForOneDecimal ) {
-                        tempo = round(tempo / 0.1) * 0.1;
-                    } if ( relativeStandardDeviation > kMaxStandardDeviationForOneDecimal ) {
-                        tempo = round(tempo);
-                    } else {
-                        // Just round out any floating-point calculation errors
-                        tempo = round(tempo / 1.0e-4) * 1.0e-4;
+                    // Update tempo history
+                    if ( SEMIDIClockReceiverSampleBufferSignificantChangeHappened(&_tickSampleBuffer) ) {
+                        // We just saw a significant change - clear the tempo history
+                        for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
+                        
+                    } else if ( samplesSinceChange >= kMinSamplesBeforeRecordingTempoHistory ) {
+                        // Add to history
+                        uint64_t tempoHistoryBucketDuration = SESecondsToHostTicks(1.0);
+                        int tempoHistoryBucket = (timestamp / tempoHistoryBucketDuration) % kTempoHistoryLength;
+                        if ( tempoHistoryBucket != _lastTempoHistoryBucket ) {
+                            // Clear this old bucket
+                            _tempoHistory[tempoHistoryBucket].max = 0.0;
+                            _tempoHistory[tempoHistoryBucket].min = DBL_MAX;
+                            _lastTempoHistoryBucket = tempoHistoryBucket;
+                        }
+                        _tempoHistory[tempoHistoryBucket].max = MAX(tempo, _tempoHistory[tempoHistoryBucket].max);
+                        _tempoHistory[tempoHistoryBucket].min = MIN(tempo, _tempoHistory[tempoHistoryBucket].min);
                     }
                     
-                    // Update error value
-                    _error = relativeStandardDeviation;
+                    // Determine how much rounding to perform on tempo, to achieve a stable value
+                    int roundingCoefficient = 5;
+                    if ( relativeStandardDeviation <= kTrustedStandardDeviation
+                            && SEMIDIClockReceiverSampleBufferSamplesSeen(&_tickSampleBuffer) > kMinSamplesBeforeTrustingZeroStdDev ) {
+                        
+                        // We trust this source - just round to avoid minor floating-point errors
+                        roundingCoefficient = 0;
+                    } else {
+                        
+                        // Untrusted source
+                        if ( samplesSinceChange >= kMinSamplesBeforeReportingTempo ) {
+                            // Only check history if we've got enough samples
+                            roundingCoefficient = 0;
+                            for ( ; roundingCoefficient < (sizeof(kRoundingCoefficients)/sizeof(double))-1; roundingCoefficient++ ) {
+                                // For each rounding coefficient (starting small), compare the rounded tempo entries with each other.
+                                // If, for a given rounding coefficient, the rounded tempo entries all match, then we'll round using this coefficient.
+                                BOOL acceptableRounding = YES;
+                                double comparisonValue = 0.0;
+                                for ( int i=0; i<kTempoHistoryLength; i++ ) {
+                                    if ( _tempoHistory[i].max == 0.0 ) continue;
+                                    
+                                    if ( comparisonValue == 0.0 ) {
+                                        // Use the first value we come to for comparison
+                                        comparisonValue = round(_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                                    }
+                                    
+                                    // Compare the value bounds for this entry against our comparison value
+                                    double roundedMaxValue = round(_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                                    double roundedMinValue = round(_tempoHistory[i].min / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                                    
+                                    if ( fabs(roundedMaxValue - comparisonValue) > 1.0e-5 || fabs(roundedMinValue - comparisonValue) > 1.0e-5 ) {
+                                        // This rounding coefficient doesn't give us a stable result - move on
+                                        acceptableRounding = NO;
+                                        break;
+                                    }
+                                }
+                                
+                                if ( acceptableRounding ) {
+                                    break;
+                                }
+                            }
+                            
+                        }
+                    }
+                    
+                    // Apply rounding
+                    tempo = round(tempo / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
                     
                     _sampleCountSinceLastTempoUpdate++;
                     
@@ -246,18 +303,16 @@ typedef enum {
                         // A significant tempo change happened. Report it (with rate limiting)
                         BOOL reportUpdate = NO;
                         
-                        if ( relativeStandardDeviation < kMinStandardDeviationForRounding
+                        if ( relativeStandardDeviation <= kTrustedStandardDeviation
                                 && SEMIDIClockReceiverSampleBufferSamplesSeen(&_tickSampleBuffer) > kMinSamplesBeforeTrustingZeroStdDev ) {
                             // Trust the source - it's very accurate - so report any change immediately
                             reportUpdate = YES;
                             
-                        } else if ( (!_tempo && _clockRunning)
-                                || SEMIDIClockReceiverSampleBufferSamplesSinceLastSignificantChange(&_tickSampleBuffer) == kMinSamplesBeforeReportingTempo ) {
+                        } else if ( (!_tempo && _clockRunning) || samplesSinceChange == kMinSamplesBeforeReportingTempo ) {
                             // Report when tempo is needed but absent, or shortly after we've seen a significant change
                             reportUpdate = YES;
                             
-                        } else if ( _sampleCountSinceLastTempoUpdate > kMinSamplesBetweenTempoUpdates
-                                   && SEMIDIClockReceiverSampleBufferSamplesSinceLastSignificantChange(&_tickSampleBuffer) >= kMinSamplesBeforeReportingTempo ) {
+                        } else if ( _sampleCountSinceLastTempoUpdate > kMinSamplesBetweenTempoUpdates && samplesSinceChange >= kMinSamplesBeforeReportingTempo ) {
                             // Report every so often
                             reportUpdate = YES;
                         }
@@ -374,6 +429,7 @@ typedef enum {
     _sampleCountSinceLastTempoUpdate = 0;
     SEMIDIClockReceiverSampleBufferClear(&_tickSampleBuffer);
     SEMIDIClockReceiverSampleBufferClear(&_timeBaseSampleBuffer);
+    for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
     [self didChangeValueForKey:@"receivingTempo"];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStopTempoSyncNotification
@@ -448,6 +504,7 @@ double SEMIDIClockReceiverGetTempo(__unsafe_unretained SEMIDIClockReceiver * rec
         _sampleCountSinceLastTempoUpdate = 0;
         SEMIDIClockReceiverSampleBufferClear(&_tickSampleBuffer);
         SEMIDIClockReceiverSampleBufferClear(&_timeBaseSampleBuffer);
+        for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
         [self didChangeValueForKey:@"receivingTempo"];
         
         [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStopTempoSyncNotification
@@ -516,6 +573,7 @@ static void SEMIDIClockReceiverSampleBufferIntegrateSample(SEMIDIClockReceiverSa
             buffer->accumulator = 0;
             buffer->standardDeviation = 0;
             buffer->sampleCountSinceLastSignificantChange = 0;
+            buffer->significantChange = YES;
             
             // Add the outliers
             for ( int i=0; i<buffer->outlierCount; i++ ) {
@@ -587,6 +645,12 @@ static int SEMIDIClockReceiverSampleBufferSamplesSinceLastSignificantChange(SEMI
     return buffer->sampleCountSinceLastSignificantChange;
 }
 
+static BOOL SEMIDIClockReceiverSampleBufferSignificantChangeHappened(SEMIDIClockReceiverSampleBuffer *buffer) {
+    BOOL significantChange = buffer->significantChange;
+    buffer->significantChange = NO;
+    return significantChange;
+}
+
 static void SEMIDIClockReceiverSampleBufferClear(SEMIDIClockReceiverSampleBuffer *buffer) {
     memset(buffer, 0, sizeof(SEMIDIClockReceiverSampleBuffer));
 }
@@ -626,9 +690,9 @@ static void _SEMIDIClockReceiverSampleBufferAddSampleToBuffer(SEMIDIClockReceive
     }
     buffer->standardDeviation = sqrt((double)sum / (double)SEMIDIClockReceiverSampleBufferFillCount(buffer));
     
-    if ( buffer->seenSamples > kMinSamplesBeforeStoringStandardDeviation ) {
-        int standardDeviationHistoryBucket = (buffer->seenSamples / kStandardDeviationHistoryEntryDuration) % kStandardDeviationHistorySamples;
-        if ( buffer->seenSamples % kStandardDeviationHistoryEntryDuration == 0 ) {
+    if ( buffer->sampleCountSinceLastSignificantChange > kMinSamplesBeforeStoringStandardDeviation ) {
+        int standardDeviationHistoryBucket = (buffer->sampleCountSinceLastSignificantChange / kStandardDeviationHistoryEntryDuration) % kStandardDeviationHistorySamples;
+        if ( buffer->sampleCountSinceLastSignificantChange % kStandardDeviationHistoryEntryDuration == 0 ) {
             buffer->standardDeviationHistory[standardDeviationHistoryBucket] = 0;
         }
         buffer->standardDeviationHistory[standardDeviationHistoryBucket] = MAX(buffer->standardDeviationHistory[standardDeviationHistoryBucket], buffer->standardDeviation);
