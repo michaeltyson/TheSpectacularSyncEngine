@@ -37,6 +37,7 @@ typedef struct {
     uint64_t _timeBase;
     double _positionAtStart;
     uint64_t _lastRenderEnd;
+    int _lastPlayedBeat;
     DSMetronomeTone _tones[kMaxTones];
 }
 @end
@@ -57,6 +58,7 @@ typedef struct {
     
     _timeBase = applyTime - SEBeatsToHostTicks(_positionAtStart, _tempo);
     _lastRenderEnd = _timeBase;
+    _lastPlayedBeat = -1;
     
     [self didChangeValueForKey:@"started"];
     [[NSNotificationCenter defaultCenter] postNotificationName:DSMetronomeDidStartNotification
@@ -70,6 +72,8 @@ typedef struct {
     [self willChangeValueForKey:@"started"];
     _timeBase = 0;
     _positionAtStart = 0;
+    _lastRenderEnd = 0;
+    _lastPlayedBeat = -1;
     [self didChangeValueForKey:@"started"];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:DSMetronomeDidStopNotification object:self];
@@ -84,8 +88,8 @@ typedef struct {
         _positionAtStart = timelinePosition;
     } else {
         _timeBase = applyTime - SEBeatsToHostTicks(timelinePosition, _tempo);
-        _lastRenderEnd = _timeBase;
     }
+    _lastPlayedBeat = -1;
     [[NSNotificationCenter defaultCenter] postNotificationName:DSMetronomeDidChangeTimelineNotification
                                                         object:self
                                                       userInfo:@{ DSNotificationPositionKey: @(timelinePosition),
@@ -142,17 +146,19 @@ static void render(__unsafe_unretained DSMetronome * THIS, const AudioTimeStamp 
         // First catch up on any missed buffers
         if ( bufferStartPosition > lastBufferPosition && bufferStartPosition-lastBufferPosition < 0.5 ) {
             double offsetUnused;
-            BOOL major;
-            if ( findBeatBoundary(lastBufferPosition, bufferStartPosition, &offsetUnused, &major) ) {
-                addTone(THIS, major ? kMajorBeatFrequency : kMinorBeatFrequency, kTickDuration * 44100.0, 0);
+            int beat;
+            if ( findBeatBoundary(lastBufferPosition, bufferStartPosition, &offsetUnused, &beat) && beat > THIS->_lastPlayedBeat ) {
+                addTone(THIS, (beat%4 == 0) ? kMajorBeatFrequency : kMinorBeatFrequency, kTickDuration * 44100.0, 0);
+                THIS->_lastPlayedBeat = beat;
             }
         }
         
         // Now fill in any new tone in this buffer
         double offset;
-        BOOL major;
-        if ( findBeatBoundary(bufferStartPosition, bufferEndPosition, &offset, &major) ) {
-            addTone(THIS, major ? kMajorBeatFrequency : kMinorBeatFrequency, kTickDuration * 44100.0, offset);
+        int beat;
+        if ( findBeatBoundary(bufferStartPosition, bufferEndPosition, &offset, &beat) && beat > THIS->_lastPlayedBeat ) {
+            addTone(THIS, (beat%4 == 0) ? kMajorBeatFrequency : kMinorBeatFrequency, kTickDuration * 44100.0, offset);
+            THIS->_lastPlayedBeat = beat;
         }
     }
     
@@ -166,11 +172,11 @@ static void render(__unsafe_unretained DSMetronome * THIS, const AudioTimeStamp 
     THIS->_lastRenderEnd = time->mHostTime + SESecondsToHostTicks(inNumberFrames / 44100.0);
 }
 
-static BOOL findBeatBoundary(double start, double end, double *outOffset, BOOL *outIsMajor) {
+static BOOL findBeatBoundary(double start, double end, double *outOffset, int *outBeatNumber) {
     if ( floor(start) != floor(end) || fmod(start, 1.0) < 1.0e-5 ) {
         // We straddle a boundary
         *outOffset = fmod(start, 1.0) < 1.0e-5 ? 0.0 : ceil(start) - start;
-        *outIsMajor = fmod(ceil(start), 4.0) < 1.0e-5;
+        *outBeatNumber = (int)round(start);
         return YES;
     } else {
         return NO;
