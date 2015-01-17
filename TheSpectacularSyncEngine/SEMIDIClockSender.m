@@ -224,7 +224,9 @@ static const double kThreadPriority                         = 0.8;    // Priorit
         return;
     }
     
-    NSAssert(!(tempo == 0.0 && _started), @"You must stop the clock before setting tempo to zero");
+    if ( tempo == 0.0 && !_started ) {
+        [self stop];
+    }
     
     @synchronized ( self ) {
         if ( _timeBase ) {

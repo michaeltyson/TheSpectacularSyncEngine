@@ -158,8 +158,7 @@ extern "C" {
  *  may not be immediate, so it is recommended that you provide a tempo as far in
  *  advance of starting the clock as possible.
  *
- *  If you set this value to zero, the sender will cease sending clock messages. You
- *  should only do so if the clock is already stopped.
+ *  If you set this value to zero, the sender will cease sending clock messages.
  */
 @property (nonatomic) double tempo;
 
