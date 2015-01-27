@@ -12,6 +12,7 @@
 
 #ifdef DEBUG
 // #define DEBUG_LOGGING
+// #define DEBUG_ALL_MESSAGES
 #endif
 
 NSString * const SEMIDIClockReceiverDidStartTempoSyncNotification = @"SEMIDIClockReceiverDidStartTempoSyncNotification";
@@ -119,6 +120,16 @@ typedef enum {
         if ( packet->length == 0 ) {
             continue;
         }
+        
+        #ifdef DEBUG_ALL_MESSAGES
+        NSLog(@"%llu: %@",
+              timestamp,
+              packet->data[0] == SEMIDIMessageClockStart ? @"Start" :
+              packet->data[0] == SEMIDIMessageClockStop ? @"Stop" :
+              packet->data[0] == SEMIDIMessageContinue ? @"Continue" :
+              packet->data[0] == SEMIDIMessageSongPosition ? @"Song Position" :
+              packet->data[0] == SEMIDIMessageClock ? @"Clock" : @"Other message");
+        #endif
         
         switch ( packet->data[0] ) {
             case SEMIDIMessageClockStart:
