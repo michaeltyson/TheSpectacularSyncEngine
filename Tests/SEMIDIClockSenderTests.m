@@ -41,7 +41,7 @@
     NSArray * sentMessages = interface.sortedSentMessages;
     
     // Verify correct number of ticks
-    XCTAssertEqualWithAccuracy(sentMessages.count, 1 + (SESecondsToHostTicks(firstRunInterval) / tickDuration), 20);
+    XCTAssertEqualWithAccuracy(sentMessages.count, 1 + (SESecondsToHostTicks(firstRunInterval) / tickDuration), 10);
     
     // Verify ticks
     int i = 0;
@@ -109,7 +109,7 @@
     i++;
     
     // Verify correct number of ticks following start
-    XCTAssertEqualWithAccuracy(sentMessages.count - i, SESecondsToHostTicks(secondRunInterval) / tickDuration, 20);
+    XCTAssertEqualWithAccuracy(sentMessages.count - i, SESecondsToHostTicks(secondRunInterval) / tickDuration, 10);
     
     // Now verify ticks
     time = startTime;
@@ -142,6 +142,62 @@
     XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageClockStop);
 }
 
+-(void)testSpontaneousStart {
+    double tempo = 125.0; // Works out at one MIDI tick per 0.2 seconds
+    uint64_t tickDuration = SESecondsToHostTicks((60.0 / tempo) / SEMIDITicksPerBeat);
+    
+    SEMIDIClockSenderTestInterface * interface = [SEMIDIClockSenderTestInterface new];
+    SEMIDIClockSender * sender = [[SEMIDIClockSender alloc] initWithInterface:interface];
+    
+    sender.tempo = tempo;
+    
+    // Run for a short time
+    NSTimeInterval firstRunInterval = 1.283;
+    [NSThread sleepForTimeInterval:firstRunInterval];
+    
+    // Start
+    uint64_t startTime = SECurrentTimeInHostTicks();
+    startTime = [sender startAtTime:startTime];
+    
+    // Run for a short time
+    NSTimeInterval secondRunInterval = 1.0;
+    [NSThread sleepForTimeInterval:secondRunInterval];
+    
+    // Get sent messages, properly ordered
+    NSArray * sentMessages = interface.sortedSentMessages;
+    
+    // Skip over initial ticks, find start message
+    int i;
+    for ( i = 0; i < sentMessages.count; i++ ) {
+        const MIDIPacketList *packetList = [sentMessages[i] bytes];
+        if ( packetList->packet[0].data[0] != SEMIDIMessageClock ) {
+            break;
+        }
+    }
+    
+    XCTAssertEqualWithAccuracy(i, SESecondsToHostTicks(firstRunInterval) / tickDuration, 10);
+    
+    const MIDIPacketList *packetList = [sentMessages[i] bytes];
+    XCTAssertEqual(packetList->packet[0].data[0], SEMIDIMessageClockStart);
+    
+    int tickCountSinceStart = 0;
+    uint64_t lastTickTimestamp = ((const MIDIPacketList*)[sentMessages[i-1] bytes])->packet[0].timeStamp;
+    i++;
+    
+    // Look through next ticks, make sure they have sensible timestamps
+    for ( ; i < sentMessages.count; i++, tickCountSinceStart++ ) {
+        const MIDIPacketList *packetList = [sentMessages[i] bytes];
+        if ( packetList->packet[0].data[0] != SEMIDIMessageClock ) {
+            break;
+        }
+        XCTAssertLessThanOrEqual(packetList->packet[0].timeStamp - lastTickTimestamp, tickDuration);
+        lastTickTimestamp = packetList->packet[0].timeStamp;
+    }
+    
+    XCTAssertEqualWithAccuracy(tickCountSinceStart, SESecondsToHostTicks(secondRunInterval) / tickDuration, 10);
+    XCTAssertEqual(lastTickTimestamp - (tickDuration * (tickCountSinceStart-1)), startTime);
+}
+
 -(void)testTempoChange {
     double firstTempo = 120.0;
     double secondTempo = 180.0;
@@ -168,7 +224,7 @@
     uint64_t firstTempoTickDuration = SESecondsToHostTicks((60.0 / firstTempo) / SEMIDITicksPerBeat);
     uint64_t secondTempoTickDuration = SESecondsToHostTicks((60.0 / secondTempo) / SEMIDITicksPerBeat);
     
-    XCTAssertEqualWithAccuracy(sentMessages.count, 1 + (SESecondsToHostTicks(firstRunInterval) / firstTempoTickDuration) + (SESecondsToHostTicks(secondRunInterval) / secondTempoTickDuration), 20);
+    XCTAssertEqualWithAccuracy(sentMessages.count, 1 + (SESecondsToHostTicks(firstRunInterval) / firstTempoTickDuration) + (SESecondsToHostTicks(secondRunInterval) / secondTempoTickDuration), 10);
     
     const MIDIPacketList * packetList = [sentMessages[0] bytes];
     XCTAssertEqual(packetList->numPackets, 1);
@@ -203,7 +259,7 @@
     }
     
     int firstSegmentEnd = i;
-    XCTAssertEqualWithAccuracy(i, 1 + (SESecondsToHostTicks(firstRunInterval) / firstTempoTickDuration), 20);
+    XCTAssertEqualWithAccuracy(i, 1 + (SESecondsToHostTicks(firstRunInterval) / firstTempoTickDuration), 10);
     
     // Tempo change from here
     
@@ -226,7 +282,7 @@
         }
     }
     
-    XCTAssertEqualWithAccuracy(i - firstSegmentEnd, (SESecondsToHostTicks(secondRunInterval) / secondTempoTickDuration), 20);
+    XCTAssertEqualWithAccuracy(i - firstSegmentEnd, (SESecondsToHostTicks(secondRunInterval) / secondTempoTickDuration), 10);
 }
 
 -(void)testPositionChange {
@@ -265,7 +321,7 @@
     NSArray *sentMessages = interface.sortedSentMessages;
     
     XCTAssertEqualWithAccuracy(sentMessages.count,
-                               1 + (SESecondsToHostTicks(firstRunInterval) / tickDuration) + 2 + (SESecondsToHostTicks(secondRunInterval) / tickDuration) + 2 + (SESecondsToHostTicks(thirdRunInterval) / tickDuration), 20);
+                               1 + (SESecondsToHostTicks(firstRunInterval) / tickDuration) + 2 + (SESecondsToHostTicks(secondRunInterval) / tickDuration) + 2 + (SESecondsToHostTicks(thirdRunInterval) / tickDuration), 10);
     
     // Find start
     int i;
@@ -305,7 +361,7 @@
     }
     
     int firstSegmentEnd = i;
-    XCTAssertEqualWithAccuracy(i, 1 + (SESecondsToHostTicks(firstRunInterval) / tickDuration), 20);
+    XCTAssertEqualWithAccuracy(i, 1 + (SESecondsToHostTicks(firstRunInterval) / tickDuration), 10);
     
     // Position change from here
     
@@ -346,7 +402,7 @@
         }
     }
     
-    XCTAssertEqualWithAccuracy(i - firstSegmentEnd, (SESecondsToHostTicks(secondRunInterval) / tickDuration), 20);
+    XCTAssertEqualWithAccuracy(i - firstSegmentEnd, (SESecondsToHostTicks(secondRunInterval) / tickDuration), 10);
     
     // Second position change from here - verify that the song position was sent at the right time
     
@@ -399,7 +455,7 @@
     
     XCTAssertTrue(foundNewTimeline);
     
-    XCTAssertEqualWithAccuracy(i - secondSegmentEnd, (SESecondsToHostTicks(thirdRunInterval) / tickDuration), 20);
+    XCTAssertEqualWithAccuracy(i - secondSegmentEnd, (SESecondsToHostTicks(thirdRunInterval) / tickDuration), 10);
 }
 
 
