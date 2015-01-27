@@ -91,15 +91,16 @@ static const double kThreadPriority                         = 0.8;    // Priorit
         MIDIPacketListAdd(&packetList, sizeof(packetList), packet, startTime - 1 /* force ordering immediately before tick */, sizeof(message), message);
         [_senderInterface sendMIDIPacketList:&packetList];
         
-        // Prepare to send the next tick at the apply time, or the smallest multiple of the tick time past the apply time that is also past the current next tick time
+        // Prepare to send the next tick at the apply time, or the smallest multiple of the tick time past the apply time that is also past the prior sent tick time
         uint64_t nextTickTime = startTime + _timeAdvanceAtStart;
         uint64_t tickDuration = SESecondsToHostTicks((60.0 / _tempo) / SEMIDITicksPerBeat);
-        if ( _nextTickTime > SESecondsToHostTicks(kTickResyncThreshold) && nextTickTime < _nextTickTime - SESecondsToHostTicks(kTickResyncThreshold) ) {
+        if ( _nextTickTime && nextTickTime < _nextTickTime - SESecondsToHostTicks(kTickResyncThreshold) ) {
             uint64_t advance = tickDuration - ((_nextTickTime - nextTickTime) % tickDuration);
             if ( advance < SESecondsToHostTicks(kTickResyncThreshold) || tickDuration-advance < SESecondsToHostTicks(kTickResyncThreshold) ) {
-                advance = 0;
+                nextTickTime = _nextTickTime;
+            } else {
+                nextTickTime = (_nextTickTime - tickDuration) + advance;
             }
-            nextTickTime = _nextTickTime + advance;
         }
         
         _nextTickTime = nextTickTime;
@@ -165,15 +166,16 @@ static const double kThreadPriority                         = 0.8;    // Priorit
             // Update the timebase
             _timeBase = timeBase;
             
-            // Prepare to send the next tick at the apply time, or the smallest multiple of the tick time past the apply time that is also past the current next tick time
+            // Prepare to send the next tick at the apply time, or the smallest multiple of the tick time past the apply time that is also past the prior sent tick time
             uint64_t nextTickTime = applyTime + syncAdvance;
             uint64_t tickDuration = SESecondsToHostTicks((60.0 / _tempo) / SEMIDITicksPerBeat);
-            if ( nextTickTime < _nextTickTime - SESecondsToHostTicks(kTickResyncThreshold) ) {
+            if ( _nextTickTime && nextTickTime < _nextTickTime - SESecondsToHostTicks(kTickResyncThreshold) ) {
                 uint64_t advance = tickDuration - ((_nextTickTime - nextTickTime) % tickDuration);
                 if ( advance < SESecondsToHostTicks(kTickResyncThreshold) || tickDuration-advance < SESecondsToHostTicks(kTickResyncThreshold) ) {
-                    advance = 0;
+                    nextTickTime = _nextTickTime;
+                } else {
+                    nextTickTime = (_nextTickTime - tickDuration) + advance;
                 }
-                nextTickTime = _nextTickTime + advance;
             }
             
             _nextTickTime = nextTickTime;
