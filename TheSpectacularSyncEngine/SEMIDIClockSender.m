@@ -13,6 +13,7 @@ static const int kTicksPerSendInterval                      = 4;      // Max MID
 static const NSTimeInterval kFirstBeatSyncThreshold         = 1.0e-3; // Wait to send first beat if it's further away than this
 static const NSTimeInterval kTickResyncThreshold            = 1.0e-6; // If tick is beyond this threshold out of sync, resync
 static const double kThreadPriority                         = 0.8;    // Priority of the sender thread
+static const int kMaxPendingMessages                        = 10;     // Size of pending message buffer
 
 @interface SEMIDIClockSenderThread : NSThread
 @property (nonatomic, weak) SEMIDIClockSender * sender;
@@ -20,17 +21,19 @@ static const double kThreadPriority                         = 0.8;    // Priorit
 
 @interface SEMIDIClockSender () {
     double   _positionAtStart;
-    uint64_t _timeAdvanceAtStart;
+    MIDIPacketList _pendingMessages[kMaxPendingMessages];
 }
 @property (nonatomic, strong, readwrite) id<SEMIDIClockSenderInterface> senderInterface;
 @property (nonatomic, strong) SEMIDIClockSenderThread *thread;
 @property (nonatomic, readwrite) BOOL started;
 @property (nonatomic) uint64_t nextTickTime;
 @property (nonatomic) uint64_t timeBase;
+@property (nonatomic) MIDIPacketList * pendingMessages;
 @end
 
 @implementation SEMIDIClockSender
 @dynamic timelinePosition;
+@dynamic pendingMessages;
 
 -(instancetype)initWithInterface:(id<SEMIDIClockSenderInterface>)senderInterface {
     if ( !(self = [super init]) ) return nil;
@@ -51,66 +54,7 @@ static const double kThreadPriority                         = 0.8;    // Priorit
 
 -(uint64_t)startAtTime:(uint64_t)startTime {
     NSAssert(_tempo != 0, @"You must provide a tempo first");
-    
-    @synchronized ( self ) {
-        if ( !startTime ) {
-            // Determine next safe timestamp, based on next tick time.
-            //
-            // When sending clock ticks, this class sends a certain number of ticks in advance,
-            // in order to overcome system congestion and latency. This means that at any point in
-            // time, there are some ticks that have already been sent which correspond to a point
-            // in the future.
-            //
-            // If the clock were to be started at a point before this future time, then these future
-            // ticks will probably be at the wrong time. Given that the tick that immediately follows
-            // the clock start message starts the clock running at the remote end, this may mean the
-            // remote end is out of sync slightly, until the new correctly-timed ticks are received
-            // and processed.
-            //
-            // To avoid the risk of this sync problem, we determine the time that corresponds to the
-            // moment after the most recently sent advance tick.
-            
-            startTime = _tempo != 0.0 && _nextTickTime
-                ? _nextTickTime
-                : (SECurrentTimeInHostTicks() + SESecondsToHostTicks(1.0e-3) /* 1 ms, recommended by MIDI standard */);
-            
-            // Subtract the advance time, because we're going to add it later (as we would with a user-provided timestamp)
-            startTime -= _timeAdvanceAtStart;
-        }
-        
-        // Determine initial timeline position, factoring in any sync advance to account for sub-16th-note quantities
-        double timelinePosition = _positionAtStart + SEHostTicksToBeats(_timeAdvanceAtStart, _tempo);
-        
-        // Set time base, calculated backwards from cued timeline position
-        _timeBase = startTime - SEBeatsToHostTicks(_positionAtStart, _tempo) + _timeAdvanceAtStart;
-        
-        // Send start/continue message
-        MIDIPacketList packetList;
-        MIDIPacket *packet = MIDIPacketListInit(&packetList);
-        unsigned char message[1] = { timelinePosition > 0.0 ? SEMIDIMessageContinue : SEMIDIMessageClockStart };
-        MIDIPacketListAdd(&packetList, sizeof(packetList), packet, startTime - 1 /* force ordering immediately before tick */, sizeof(message), message);
-        [_senderInterface sendMIDIPacketList:&packetList];
-        
-        // Prepare to send the next tick at the apply time, or the smallest multiple of the tick time past the apply time that is also past the prior sent tick time
-        uint64_t nextTickTime = startTime + _timeAdvanceAtStart;
-        uint64_t tickDuration = SESecondsToHostTicks((60.0 / _tempo) / SEMIDITicksPerBeat);
-        if ( _nextTickTime && nextTickTime < _nextTickTime - SESecondsToHostTicks(kTickResyncThreshold) ) {
-            uint64_t advance = tickDuration - ((_nextTickTime - nextTickTime) % tickDuration);
-            if ( advance < SESecondsToHostTicks(kTickResyncThreshold) || tickDuration-advance < SESecondsToHostTicks(kTickResyncThreshold) ) {
-                nextTickTime = _nextTickTime;
-            } else {
-                nextTickTime = (_nextTickTime - tickDuration) + advance;
-            }
-        }
-        
-        _nextTickTime = nextTickTime;
-    }
-    
-    _positionAtStart = 0;
-    _timeAdvanceAtStart = 0;
-    self.started = YES;
-    
-    return startTime;
+    return [self startOrSeekWithPosition:_positionAtStart atTime:startTime startClock:YES];
 }
 
 -(void)stop {
@@ -127,73 +71,7 @@ static const double kThreadPriority                         = 0.8;    // Priorit
 }
 
 -(uint64_t)setActiveTimelinePosition:(double)timelinePosition atTime:(uint64_t)applyTime {
-    @synchronized ( self ) {
-        uint64_t tickDuration = SESecondsToHostTicks((60.0 / _tempo) / SEMIDITicksPerBeat);
-        uint64_t beatDuration = tickDuration * SEMIDITicksPerSongPositionBeat;
-        
-        if ( !applyTime ) {
-            if ( _started && fmod(timelinePosition, (double)SEMIDITicksPerSongPositionBeat / (double)SEMIDITicksPerBeat) < 1.0e-5 ) {
-                // The new position is very close to a MIDI Beat division, and we've been left to choose an apply time ourselves,
-                // so we have the opportunity to pick an apply time that will result in a smooth on-the-beat transition.
-                // Determine when the next MIDI tick is, in our current timeline, and use that as the apply time.
-                uint64_t currentPosition = SECurrentTimeInHostTicks() - _timeBase;
-                
-                uint64_t timeUntilNextTick = tickDuration - (currentPosition % tickDuration);
-                applyTime = _timeBase + currentPosition + timeUntilNextTick;
-            } else {
-                // Just use the current time
-                applyTime = SECurrentTimeInHostTicks();
-            }
-        }
-
-        // Calculate time base, and determine relative position in host ticks
-        uint64_t timeBase = applyTime - SEBeatsToHostTicks(timelinePosition, _tempo);
-        
-        // Calculate sync advance to closest MIDI Beat (16th note)
-        uint64_t syncAdvance = 0;
-        uint64_t position = applyTime - timeBase;
-        uint64_t modulus = position % beatDuration;
-        uint64_t threshold = SESecondsToHostTicks(kFirstBeatSyncThreshold);
-        if ( modulus > threshold && beatDuration - modulus > threshold ) {
-            syncAdvance = beatDuration - modulus;
-        }
-        
-        // Determine number of MIDI Beats to report
-        double beatsToMIDIBeats = (double)SEMIDITicksPerBeat / (double)SEMIDITicksPerSongPositionBeat;
-        int totalBeats = round((timelinePosition + SEHostTicksToBeats(syncAdvance, _tempo)) * beatsToMIDIBeats);
-        
-        if ( _started ) {
-            // Update the timebase
-            _timeBase = timeBase;
-            
-            // Prepare to send the next tick at the apply time, or the smallest multiple of the tick time past the apply time that is also past the prior sent tick time
-            uint64_t nextTickTime = applyTime + syncAdvance;
-            uint64_t tickDuration = SESecondsToHostTicks((60.0 / _tempo) / SEMIDITicksPerBeat);
-            if ( _nextTickTime && nextTickTime < _nextTickTime - SESecondsToHostTicks(kTickResyncThreshold) ) {
-                uint64_t advance = tickDuration - ((_nextTickTime - nextTickTime) % tickDuration);
-                if ( advance < SESecondsToHostTicks(kTickResyncThreshold) || tickDuration-advance < SESecondsToHostTicks(kTickResyncThreshold) ) {
-                    nextTickTime = _nextTickTime;
-                } else {
-                    nextTickTime = (_nextTickTime - tickDuration) + advance;
-                }
-            }
-            
-            _nextTickTime = nextTickTime;
-        } else {
-            // Cue this position for when we start
-            _positionAtStart = timelinePosition;
-            _timeAdvanceAtStart = syncAdvance;
-        }
-        
-        // Send song position
-        MIDIPacketList packetList;
-        MIDIPacket *packet = MIDIPacketListInit(&packetList);
-        unsigned char positionMessage[3] = {SEMIDIMessageSongPosition, totalBeats & 0x7F, (totalBeats >> 7) & 0x7F};
-        packet = MIDIPacketListAdd(&packetList, sizeof(packetList), packet, applyTime + syncAdvance - 1 /* force ordering before tick */, sizeof(positionMessage), positionMessage);
-        [_senderInterface sendMIDIPacketList:&packetList];
-    }
-    
-    return applyTime;
+    return [self startOrSeekWithPosition:timelinePosition atTime:applyTime startClock:NO];
 }
 
 -(double)activeTimelinePositionForTime:(uint64_t)timestamp {
@@ -214,7 +92,7 @@ static const double kThreadPriority                         = 0.8;    // Priorit
 }
 
 -(void)setTimelinePosition:(double)timelinePosition {
-    [self setActiveTimelinePosition:timelinePosition atTime:0];
+    [self setActiveTimelinePosition:timelinePosition atTime:SECurrentTimeInHostTicks()];
 }
 
 -(double)timelinePosition {
@@ -242,15 +120,122 @@ static const double kThreadPriority                         = 0.8;    // Priorit
     }
     
     if ( tempo != 0.0 && !_thread ) {
-        // Start the thread which will send out the ticks
-        self.thread = [SEMIDIClockSenderThread new];
-        _thread.sender = self;
-        [_thread start];
+        // Start the thread which will send out the ticks - in a moment, in case clock is started next
+        [self performSelector:@selector(startThread) withObject:nil afterDelay:0.0];
     } else if ( tempo == 0.0 && _thread ) {
         // Stop the thread
         [_thread cancel];
         self.thread = nil;
     }
+}
+
+-(uint64_t)startOrSeekWithPosition:(double)timelinePosition atTime:(uint64_t)applyTime startClock:(BOOL)start {
+    @synchronized ( self ) {
+        uint64_t tickDuration = SESecondsToHostTicks((60.0 / _tempo) / SEMIDITicksPerBeat);
+        uint64_t MIDIBeatDuration = tickDuration * SEMIDITicksPerSongPositionBeat;
+        double beatsToMIDIBeats = (double)SEMIDITicksPerBeat / (double)SEMIDITicksPerSongPositionBeat;
+        
+        if ( !_started && !start ) {
+            // Just send song position
+            if ( !applyTime ) applyTime = SECurrentTimeInHostTicks();
+            int totalBeats = round(timelinePosition * beatsToMIDIBeats);
+            [self enqueueMessage:(unsigned char[3]){SEMIDIMessageSongPosition, totalBeats & 0x7F, (totalBeats >> 7) & 0x7F}
+                          length:3
+                            time:applyTime];
+            
+            // Cue this position for when we start
+            _positionAtStart = timelinePosition;
+            return applyTime;
+        }
+        
+        if ( !applyTime ) {
+            // We've been left to choose an apply time ourselves: choose the next tick time,
+            // to give us the best chance of a smooth transition.
+            applyTime = _nextTickTime ? _nextTickTime : SECurrentTimeInHostTicks();
+        }
+        
+        // Calculate time base, and determine relative position in host ticks
+        uint64_t timeBase = applyTime - SEBeatsToHostTicks(timelinePosition, _tempo);
+        
+        if ( _nextTickTime && applyTime <= (_nextTickTime-tickDuration) ) {
+            // If our apply time is before the last tick we sent, we'll need to move up the timeline.
+            // Work out when the next MIDI beat is, and use that as our apply time
+            uint64_t latestPosition = _nextTickTime - timeBase;
+            uint64_t timeUntilNextMIDIBeat = MIDIBeatDuration - (latestPosition % MIDIBeatDuration);
+            applyTime = timeBase + latestPosition + timeUntilNextMIDIBeat;
+            timelinePosition = SEHostTicksToBeats(applyTime - timeBase, _tempo);
+        }
+        
+        // Calculate time, in our new timeline, to the closest MIDI Beat (16th note)
+        uint64_t timeUntilNextMIDIBeat = 0;
+        uint64_t position = applyTime - timeBase;
+        uint64_t modulus = position % MIDIBeatDuration;
+        uint64_t threshold = SESecondsToHostTicks(kFirstBeatSyncThreshold);
+        if ( modulus > threshold && MIDIBeatDuration - modulus > threshold ) {
+            timeUntilNextMIDIBeat = MIDIBeatDuration - modulus;
+        }
+        
+        // Determine number of MIDI Beats to report
+        int totalBeats = round((timelinePosition + SEHostTicksToBeats(timeUntilNextMIDIBeat, _tempo)) * beatsToMIDIBeats);
+        
+        if ( _started || totalBeats > 0 ) {
+            // Send song position
+            [self enqueueMessage:(unsigned char[3]){SEMIDIMessageSongPosition, totalBeats & 0x7F, (totalBeats >> 7) & 0x7F}
+                          length:3
+                            time:applyTime + timeUntilNextMIDIBeat - 1 /* force ordering before tick */];
+        }
+        
+        if ( _started || start) {
+            // Update the timebase
+            _timeBase = timeBase;
+        }
+        
+        if ( start ) {
+            [self enqueueMessage:(unsigned char[1]){ totalBeats > 0.0 ? SEMIDIMessageContinue : SEMIDIMessageClockStart }
+                          length:1
+                            time:applyTime + timeUntilNextMIDIBeat - 1 /* force ordering before tick */];
+            
+            _positionAtStart = 0;
+            self.started = YES;
+            
+            if ( !_thread ) {
+                [self startThread];
+            }
+        }
+    }
+    
+    return applyTime;
+}
+
+-(void)startThread {
+    if ( !_thread ) {
+        self.thread = [SEMIDIClockSenderThread new];
+        _thread.sender = self;
+        [_thread start];
+    }
+}
+
+-(void)enqueueMessage:(const unsigned char*)message length:(int)length time:(MIDITimeStamp)timestamp {
+    if ( _thread ) {
+        // Enqueue message to be sent from sender thread, at the appropriate time
+        for ( int i=0; i<kMaxPendingMessages; i++ ) {
+            if ( _pendingMessages[i].numPackets == 0 ) {
+                MIDIPacket *packet = MIDIPacketListInit(&_pendingMessages[i]);
+                packet = MIDIPacketListAdd(&_pendingMessages[i], sizeof(_pendingMessages[i]), packet, timestamp, length, message);
+                break;
+            }
+        }
+    } else {
+        // Send immediately
+        MIDIPacketList packetList;
+        MIDIPacket *packet = MIDIPacketListInit(&packetList);
+        packet = MIDIPacketListAdd(&packetList, sizeof(packetList), packet, timestamp, length, message);
+        [_senderInterface sendMIDIPacketList:&packetList];
+    }
+}
+
+-(MIDIPacketList *)pendingMessages {
+    return _pendingMessages;
 }
 
 @end
@@ -272,7 +257,7 @@ static const double kThreadPriority                         = 0.8;    // Priorit
             
             // Send the next batch of ticks
             uint64_t tickDuration = SESecondsToHostTicks((60.0 / _sender.tempo) / SEMIDITicksPerBeat);
-            _sender.nextTickTime = [self sendTicksFromTime:_sender.nextTickTime toTime:now + (tickDuration * kTicksPerSendInterval)];
+            _sender.nextTickTime = [self sendFromTime:_sender.nextTickTime toTime:now + (tickDuration * kTicksPerSendInterval)];
             
             // Wait half the duration of the ticks we just sent (to avoid running out of time; we'll skip the ticks we've already sent)
             nextSendTime = now + (tickDuration * kTicksPerSendInterval) / 2;
@@ -281,9 +266,13 @@ static const double kThreadPriority                         = 0.8;    // Priorit
         // Sleep
         mach_wait_until(nextSendTime);
     }
+    
+    @synchronized ( _sender ) {
+        _sender.nextTickTime = 0;
+    }
 }
 
--(uint64_t)sendTicksFromTime:(uint64_t)start toTime:(uint64_t)end {
+-(uint64_t)sendFromTime:(uint64_t)start toTime:(uint64_t)end {
     if ( _sender.tempo == 0 ) {
         return start;
     }
@@ -302,12 +291,22 @@ static const double kThreadPriority                         = 0.8;    // Priorit
         }
     }
     
-    // Send ticks for the time period from 'start', and up to (but not including) 'end'
+    MIDIPacketList * pendingMessages = _sender.pendingMessages;
+    
+    // Send messages for the time period from 'start', and up to (but not including) 'end'
     MIDIPacketList packetList;
     uint8_t message = SEMIDIMessageClock;
     uint64_t time = start;
     int count = 0;
     for ( count = 0; time < end; count++, time += tickDuration ) {
+        // Dispatch pending messages
+        for ( int i=0; i<kMaxPendingMessages; i++ ) {
+            if ( pendingMessages[i].numPackets != 0 && pendingMessages[i].packet[0].timeStamp < time ) {
+                [_sender.senderInterface sendMIDIPacketList:&pendingMessages[i]];
+                pendingMessages[i].numPackets = 0;
+            }
+        }
+        
         if ( time < start ) {
             // Skip ticks we've already sent
             continue;

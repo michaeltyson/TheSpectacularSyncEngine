@@ -14,7 +14,6 @@
 }
 -(void)clear;
 @property (nonatomic) NSArray * sentMessages;
-@property (nonatomic, readonly) NSArray * sortedSentMessages;
 @end
 
 @interface SEMIDIClockSenderTests : XCTestCase
@@ -30,91 +29,121 @@
     SEMIDIClockSenderTestInterface * interface = [SEMIDIClockSenderTestInterface new];
     SEMIDIClockSender * sender = [[SEMIDIClockSender alloc] initWithInterface:interface];
     
-    uint64_t setTempoTime = SECurrentTimeInHostTicks();
     sender.tempo = tempo;
     
     // Run for a short time
     NSTimeInterval firstRunInterval = 1.0;
-    [NSThread sleepForTimeInterval:firstRunInterval];
-    
-    // Get sent messages, properly ordered
-    NSArray * sentMessages = interface.sortedSentMessages;
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:firstRunInterval]];
     
     // Verify correct number of ticks
-    XCTAssertEqualWithAccuracy(sentMessages.count, 1 + (SESecondsToHostTicks(firstRunInterval) / tickDuration), 10);
+    XCTAssertEqualWithAccuracy(interface.sentMessages.count, 1 + (SESecondsToHostTicks(firstRunInterval) / tickDuration), 10);
     
     // Verify ticks
     int i = 0;
-    uint64_t time = setTempoTime;
-    for ( NSData * packetData in sentMessages ) {
+    uint64_t time = 0;
+    for ( NSData * packetData in interface.sentMessages ) {
         const MIDIPacketList * packetList = packetData.bytes;
         
         XCTAssertEqual(packetList->packet[0].length, 1, @"Tick %d has wrong length", i);
         XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageClock, @"Tick %d has wrong type", i);
-        XCTAssertEqualWithAccuracy(packetList->packet[0].timeStamp,
-                                   time,
-                                   SESecondsToHostTicks(1.0e-3),
-                                   @"Tick %d has wrong time (%lf s %@)",
-                                   i,
-                                   SEHostTicksToSeconds(labs((long)packetList->packet[0].timeStamp - (long)time)),
-                                   packetList->packet[0].timeStamp > time ? @"ahead" : @"behind");
-        
+        if ( time ) {
+            XCTAssertEqualWithAccuracy(packetList->packet[0].timeStamp,
+                                       time,
+                                       SESecondsToHostTicks(1.0e-3),
+                                       @"Tick %d has wrong time (%lf s %@)",
+                                       i,
+                                       SEHostTicksToSeconds(labs((long)packetList->packet[0].timeStamp - (long)time)),
+                                       packetList->packet[0].timeStamp > time ? @"ahead" : @"behind");
+        }
         if ( packetList->packet[0].length != 1
-            || labs(((long)packetList->packet[0].timeStamp - (long)time)) > SESecondsToHostTicks(1.0e-3)
+            || (time && labs(((long)packetList->packet[0].timeStamp - (long)time)) > SESecondsToHostTicks(1.0e-3))
             || packetList->packet[0].data[0] != SEMIDIMessageClock ) {
             break;
         }
         
         i++;
-        time += tickDuration;
+        time = packetList->packet[0].timeStamp + tickDuration;
     }
     
+    uint64_t tickTime = time;
+    
     // Set the timeline position
+    time = SECurrentTimeInHostTicks();
     NSTimeInterval timelinePosition = 9.0; // In beats
-    sender.timelinePosition = timelinePosition;
+    [sender setActiveTimelinePosition:timelinePosition atTime:time];
+    
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.4]];
+    
+    // Skip past ticks
+    for ( ; i<interface.sentMessages.count; i++ ) {
+        const MIDIPacketList * packetList = [interface.sentMessages[i] bytes];
+        if ( packetList->packet[0].data[0] != SEMIDIMessageClock ) break;
+        XCTAssertEqualWithAccuracy(packetList->packet[0].timeStamp,
+                                   tickTime,
+                                   SESecondsToHostTicks(1.0e-3),
+                                   @"Tick %d has wrong time (%lf s %@)",
+                                   i,
+                                   SEHostTicksToSeconds(labs((long)packetList->packet[0].timeStamp - (long)tickTime)),
+                                   packetList->packet[0].timeStamp > tickTime ? @"ahead" : @"behind");
+        tickTime = packetList->packet[0].timeStamp + tickDuration;
+    }
+    
+    XCTAssertTrue(i < interface.sentMessages.count);
     
     // Verify we got the timeline position update
-    const MIDIPacketList * packetList = [interface.sentMessages.lastObject bytes];
+    const MIDIPacketList * packetList = [interface.sentMessages[i] bytes];
     XCTAssertEqual(packetList->packet[0].length, 3);
     XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageSongPosition);
     int beats = ((unsigned short)packetList->packet[0].data[2] << 7) | (unsigned short)packetList->packet[0].data[1];
     XCTAssertEqual(beats, timelinePosition * ((double)SEMIDITicksPerBeat / (double)SEMIDITicksPerSongPositionBeat));
+    i++;
     
     // Start
     uint64_t startTime = [sender startAtTime:0];
     
+    // Run for a short time
+    NSTimeInterval secondRunInterval = 2.0;
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:secondRunInterval]];
+    
+    // Skip past ticks
+    for ( ; i<interface.sentMessages.count; i++ ) {
+        const MIDIPacketList * packetList = [interface.sentMessages[i] bytes];
+        if ( packetList->packet[0].data[0] != SEMIDIMessageClock ) break;
+        XCTAssertEqualWithAccuracy(packetList->packet[0].timeStamp,
+                                   tickTime,
+                                   SESecondsToHostTicks(1.0e-3),
+                                   @"Tick %d has wrong time (%lf s %@)",
+                                   i,
+                                   SEHostTicksToSeconds(labs((long)packetList->packet[0].timeStamp - (long)tickTime)),
+                                   packetList->packet[0].timeStamp > tickTime ? @"ahead" : @"behind");
+        tickTime = packetList->packet[0].timeStamp + tickDuration;
+    }
+    
+    XCTAssertTrue(i < interface.sentMessages.count);
+    
+    // Verify we got the next timeline position update
+    packetList = [interface.sentMessages[i] bytes];
+    XCTAssertEqual(packetList->packet[0].length, 3);
+    XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageSongPosition);
+    XCTAssertEqual(packetList->packet[0].timeStamp, startTime - 1);
+    beats = ((unsigned short)packetList->packet[0].data[2] << 7) | (unsigned short)packetList->packet[0].data[1];
+    XCTAssertEqual(beats, timelinePosition * ((double)SEMIDITicksPerBeat / (double)SEMIDITicksPerSongPositionBeat));
+    i++;
+    
     // Verify we got the continue message
-    packetList = [interface.sentMessages.lastObject bytes];
+    packetList = [interface.sentMessages[i] bytes];
     XCTAssertEqual(packetList->packet[0].length, 1);
     XCTAssertEqual(packetList->packet[0].timeStamp, startTime - 1);
     XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageContinue);
-    
-    // Run for a short time
-    NSTimeInterval secondRunInterval = 2.0;
-    [NSThread sleepForTimeInterval:secondRunInterval];
-    
-    // Get sent messages, properly ordered
-    sentMessages = interface.sortedSentMessages;
-    
-    // Find continue message
-    for ( i=0; i<sentMessages.count; i++ ) {
-        packetList = [sentMessages[i] bytes];
-        if ( packetList->packet[0].data[0] == SEMIDIMessageContinue ) {
-            break;
-        }
-    }
-    
-    XCTAssertNotEqual(i, sentMessages.count);
-    
     i++;
     
     // Verify correct number of ticks following start
-    XCTAssertEqualWithAccuracy(sentMessages.count - i, SESecondsToHostTicks(secondRunInterval) / tickDuration, 10);
+    XCTAssertEqualWithAccuracy(interface.sentMessages.count - i, SESecondsToHostTicks(secondRunInterval) / tickDuration, 10);
     
     // Now verify ticks
     time = startTime;
-    for ( int index=1 ; i < sentMessages.count-1; i++, time += tickDuration, index++ ) {
-        const MIDIPacketList * packetList = [sentMessages[i] bytes];
+    for ( int index=1 ; i < interface.sentMessages.count-1; i++, time += tickDuration, index++ ) {
+        const MIDIPacketList * packetList = [interface.sentMessages[i] bytes];
         
         XCTAssertEqual(packetList->packet[0].length, 1, @"Tick %d has wrong length", index);
         XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageClock, @"Tick %d has wrong type", index);
@@ -153,7 +182,7 @@
     
     // Run for a short time
     NSTimeInterval firstRunInterval = 1.283;
-    [NSThread sleepForTimeInterval:firstRunInterval];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:firstRunInterval]];
     
     // Start
     uint64_t startTime = SECurrentTimeInHostTicks();
@@ -161,41 +190,66 @@
     
     // Run for a short time
     NSTimeInterval secondRunInterval = 1.0;
-    [NSThread sleepForTimeInterval:secondRunInterval];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:secondRunInterval]];
     
-    // Get sent messages, properly ordered
-    NSArray * sentMessages = interface.sortedSentMessages;
-    
-    // Skip over initial ticks, find start message
-    int i;
-    for ( i = 0; i < sentMessages.count; i++ ) {
-        const MIDIPacketList *packetList = [sentMessages[i] bytes];
-        if ( packetList->packet[0].data[0] != SEMIDIMessageClock ) {
-            break;
+    // Go through initial ticks, and make sure the new timeline came into effect
+    int i=0;
+    uint64_t tickTime = 0;
+    BOOL foundNewTimeline = NO;
+    for ( ; i<interface.sentMessages.count; i++ ) {
+        const MIDIPacketList * packetList = [interface.sentMessages[i] bytes];
+        if ( packetList->packet[0].data[0] != SEMIDIMessageClock ) break;
+        if ( tickTime ) {
+            if ( (startTime - packetList->packet[0].timeStamp) % tickDuration == 0 ) {
+                foundNewTimeline = YES;
+                tickTime = packetList->packet[0].timeStamp;
+            }
+            
+            XCTAssertEqualWithAccuracy(packetList->packet[0].timeStamp,
+                                       tickTime,
+                                       SESecondsToHostTicks(1.0e-3),
+                                       @"Tick %d has wrong time (%lf s %@)",
+                                       i,
+                                       SEHostTicksToSeconds(labs((long)packetList->packet[0].timeStamp - (long)tickTime)),
+                                       packetList->packet[0].timeStamp > tickTime ? @"ahead" : @"behind");
         }
+        tickTime = packetList->packet[0].timeStamp + tickDuration;
     }
+    
+    XCTAssertTrue(i < interface.sentMessages.count);
+    XCTAssertTrue(foundNewTimeline);
     
     XCTAssertEqualWithAccuracy(i, SESecondsToHostTicks(firstRunInterval) / tickDuration, 10);
     
-    const MIDIPacketList *packetList = [sentMessages[i] bytes];
-    XCTAssertEqual(packetList->packet[0].data[0], SEMIDIMessageClockStart);
-    
-    int tickCountSinceStart = 0;
-    uint64_t lastTickTimestamp = ((const MIDIPacketList*)[sentMessages[i-1] bytes])->packet[0].timeStamp;
+    // Make sure we got a song position (for 1 MIDI beat)
+    const MIDIPacketList *packetList = [interface.sentMessages[i] bytes];
+    XCTAssertEqual(packetList->packet[0].data[0], SEMIDIMessageSongPosition);
+    int beats = ((unsigned short)packetList->packet[0].data[2] << 7) | (unsigned short)packetList->packet[0].data[1];
+    XCTAssertEqual(beats, 1);
+    XCTAssertEqual(packetList->packet[0].timeStamp, startTime - 1);
     i++;
     
+    // Make sure we got continue
+    packetList = [interface.sentMessages[i] bytes];
+    XCTAssertEqual(packetList->packet[0].data[0], SEMIDIMessageContinue);
+    XCTAssertEqual(packetList->packet[0].timeStamp, startTime - 1);
+    i++;
+    
+    int tickCountSinceStart = 0;
+    tickTime = startTime;
+    
     // Look through next ticks, make sure they have sensible timestamps
-    for ( ; i < sentMessages.count; i++, tickCountSinceStart++ ) {
-        const MIDIPacketList *packetList = [sentMessages[i] bytes];
+    for ( ; i < interface.sentMessages.count; i++, tickCountSinceStart++ ) {
+        const MIDIPacketList *packetList = [interface.sentMessages[i] bytes];
         if ( packetList->packet[0].data[0] != SEMIDIMessageClock ) {
             break;
         }
-        XCTAssertLessThanOrEqual(packetList->packet[0].timeStamp - lastTickTimestamp, tickDuration);
-        lastTickTimestamp = packetList->packet[0].timeStamp;
+        XCTAssertLessThanOrEqual(packetList->packet[0].timeStamp - tickTime, tickDuration);
+        tickTime = packetList->packet[0].timeStamp;
     }
     
     XCTAssertEqualWithAccuracy(tickCountSinceStart, SESecondsToHostTicks(secondRunInterval) / tickDuration, 10);
-    XCTAssertEqual(lastTickTimestamp - (tickDuration * (tickCountSinceStart-1)), startTime);
+    XCTAssertEqual(tickTime - (tickDuration * (tickCountSinceStart-1)), startTime);
 }
 
 -(void)testTempoChange {
@@ -209,17 +263,17 @@
     
     // Run for a little while
     NSTimeInterval firstRunInterval = 1.0;
-    [NSThread sleepForTimeInterval:firstRunInterval];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:firstRunInterval]];
     
     // Now change tempo
     sender.tempo = secondTempo;
     
     // Run for a little while longer
     NSTimeInterval secondRunInterval = 1.0;
-    [NSThread sleepForTimeInterval:secondRunInterval];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:secondRunInterval]];
     
     // Verify
-    NSArray * sentMessages = interface.sortedSentMessages;
+    NSArray * sentMessages = interface.sentMessages;
     
     uint64_t firstTempoTickDuration = SESecondsToHostTicks((60.0 / firstTempo) / SEMIDITicksPerBeat);
     uint64_t secondTempoTickDuration = SESecondsToHostTicks((60.0 / secondTempo) / SEMIDITicksPerBeat);
@@ -293,9 +347,9 @@
     sender.tempo = tempo;
     
     // Run for a little while
-    uint64_t time = [sender startAtTime:0];
+    uint64_t startTime = [sender startAtTime:0];
     NSTimeInterval firstRunInterval = 1.0;
-    [NSThread sleepForTimeInterval:firstRunInterval];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:firstRunInterval]];
     
     // Now change timeline position
     NSTimeInterval secondTimelinePosition = 7;
@@ -303,7 +357,7 @@
     
     // Run for a little while longer
     NSTimeInterval secondRunInterval = 0.5;
-    [NSThread sleepForTimeInterval:secondRunInterval];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:secondRunInterval]];
     
     // Change timeline position once more, but do so at an irregular number of beats
     NSTimeInterval thirdTimelinePosition = 8.1;
@@ -311,53 +365,39 @@
     
     // Run for a little while longer
     NSTimeInterval thirdRunInterval = 0.5;
-    [NSThread sleepForTimeInterval:thirdRunInterval];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:thirdRunInterval]];
     
     // Verify
     
     uint64_t tickDuration = SESecondsToHostTicks((60.0 / tempo) / SEMIDITicksPerBeat);
     uint64_t beatDuration = tickDuration * SEMIDITicksPerSongPositionBeat;
     
-    NSArray *sentMessages = interface.sortedSentMessages;
-    
-    XCTAssertEqualWithAccuracy(sentMessages.count,
+    XCTAssertEqualWithAccuracy(interface.sentMessages.count,
                                1 + (SESecondsToHostTicks(firstRunInterval) / tickDuration) + 2 + (SESecondsToHostTicks(secondRunInterval) / tickDuration) + 2 + (SESecondsToHostTicks(thirdRunInterval) / tickDuration), 10);
     
-    // Find start
-    int i;
-    for ( i=0; i<sentMessages.count; i++ ) {
-        const MIDIPacketList * packetList = [sentMessages[i] bytes];
-        if ( packetList->packet[0].data[0] == SEMIDIMessageClockStart) {
-            break;
-        }
-    }
+    int i=0;
     
-    XCTAssertNotEqual(i, sentMessages.count);
-    
+    const MIDIPacketList * packetList = [interface.sentMessages[i] bytes];
+    XCTAssertEqual(packetList->packet[0].data[0], SEMIDIMessageClockStart);
+    XCTAssertEqual(packetList->packet[0].timeStamp, startTime-1);
     i++;
     
-    for ( int index = 1; i < sentMessages.count-1; i++, time += tickDuration, index++ ) {
-        const MIDIPacketList * packetList = [sentMessages[i] bytes];
-        
-        if ( packetList->packet[0].data[0] == SEMIDIMessageSongPosition ) {
-            break;
-        }
-        
-        XCTAssertEqual(packetList->packet[0].length, 1, @"Tick %d has wrong length", index);
-        XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageClock, @"Tick %d has wrong type", index);
+    // Make sure following ticks are in time
+    uint64_t tickTime = startTime;
+    for ( ; i<interface.sentMessages.count; i++ ) {
+        const MIDIPacketList * packetList = [interface.sentMessages[i] bytes];
+        if ( packetList->packet[0].data[0] != SEMIDIMessageClock ) break;
         XCTAssertEqualWithAccuracy(packetList->packet[0].timeStamp,
-                                   time,
-                                   SESecondsToHostTicks(1.0e-9),
+                                   tickTime,
+                                   SESecondsToHostTicks(1.0e-3),
                                    @"Tick %d has wrong time (%lf s %@)",
-                                   index,
-                                   SEHostTicksToSeconds(labs((long)packetList->packet[0].timeStamp - (long)time)),
-                                   packetList->packet[0].timeStamp > time ? @"ahead" : @"behind");
-        
-        if ( packetList->packet[0].length != 1
-            || labs((long)packetList->packet[0].timeStamp - (long)time) > SESecondsToHostTicks(1.0e-9)
-            || packetList->packet[0].data[0] != SEMIDIMessageClock ) {
+                                   i,
+                                   SEHostTicksToSeconds(labs((long)packetList->packet[0].timeStamp - (long)tickTime)),
+                                   packetList->packet[0].timeStamp > tickTime ? @"ahead" : @"behind");
+        if ( labs((long)packetList->packet[0].timeStamp - (long)tickTime) > SESecondsToHostTicks(1.0e-9) ) {
             break;
         }
+        tickTime = packetList->packet[0].timeStamp + tickDuration;
     }
     
     int firstSegmentEnd = i;
@@ -365,92 +405,84 @@
     
     // Position change from here
     
-    const MIDIPacketList * packetList = [sentMessages[i] bytes];
-    const MIDIPacket * packet = &packetList->packet[0];
+    packetList = [interface.sentMessages[i] bytes];
     
-    XCTAssertEqual(packet->length, 3);
-    XCTAssertEqual((SEMIDIMessage)packet->data[0], SEMIDIMessageSongPosition);
-    int beats = ((unsigned short)packet->data[2] << 7) | (unsigned short)packet->data[1];
+    XCTAssertEqual(packetList->packet[0].length, 3);
+    XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageSongPosition);
+    int beats = ((unsigned short)packetList->packet[0].data[2] << 7) | (unsigned short)packetList->packet[0].data[1];
     int positionInBeats = (int)(SEBeatsToHostTicks(secondTimelinePosition, tempo) / beatDuration);
     XCTAssertEqual(beats, positionInBeats);
-    XCTAssertEqual(packet->timeStamp, secondTimelinePositionSetTime-1);
-    
+    XCTAssertEqual(packetList->packet[0].timeStamp, secondTimelinePositionSetTime-1);
     i++;
     
-    for ( int index = 1; i < sentMessages.count-1; i++, time += tickDuration, index++ ) {
-        packetList = [sentMessages[i] bytes];
-        
-        if ( packetList->packet[0].data[0] == SEMIDIMessageSongPosition ) {
-            break;
-        }
-        
-        XCTAssertEqual(packetList->packet[0].length, 1, @"Tick %d has wrong length", index);
-        XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageClock, @"Tick %d has wrong type", index);
-        XCTAssertEqualWithAccuracy(packetList->packet[0].timeStamp,
-                                   time,
-                                   SESecondsToHostTicks(1.0e-9),
-                                   @"Tick %d has wrong time (%lf s %@)",
-                                   index,
-                                   SEHostTicksToSeconds(labs((long)packetList->packet[0].timeStamp - (long)time)),
-                                   packetList->packet[0].timeStamp > time ? @"ahead" : @"behind");
-        
-        
-        if ( packetList->packet[0].length != 1
-            || labs((long)packetList->packet[0].timeStamp - (long)time) > SESecondsToHostTicks(1.0e-9)
-            || packetList->packet[0].data[0] != SEMIDIMessageClock ) {
-            break;
-        }
-    }
-    
-    XCTAssertEqualWithAccuracy(i - firstSegmentEnd, (SESecondsToHostTicks(secondRunInterval) / tickDuration), 10);
-    
-    // Second position change from here - verify that the song position was sent at the right time
+    // Make sure following ticks are in time
+    BOOL foundNewTimeline = NO;
     
     uint64_t beatOffset = beatDuration - (SEBeatsToHostTicks(thirdTimelinePosition, tempo) % beatDuration);
     uint64_t thirdChangeApplyTime = thirdTimelinePositionSetTime + beatOffset;
     
-    packetList = [sentMessages[i] bytes];
-    packet = &packetList->packet[0];
+    for ( ; i<interface.sentMessages.count; i++ ) {
+        const MIDIPacketList * packetList = [interface.sentMessages[i] bytes];
+        if ( packetList->packet[0].data[0] != SEMIDIMessageClock ) break;
+        
+        if ( (thirdChangeApplyTime - packetList->packet[0].timeStamp) % tickDuration == 0 ) {
+            foundNewTimeline = YES;
+            tickTime = packetList->packet[0].timeStamp;
+        }
+        
+        XCTAssertEqualWithAccuracy(packetList->packet[0].timeStamp,
+                                   tickTime,
+                                   SESecondsToHostTicks(1.0e-3),
+                                   @"Tick %d has wrong time (%lf s %@)",
+                                   i,
+                                   SEHostTicksToSeconds(labs((long)packetList->packet[0].timeStamp - (long)tickTime)),
+                                   packetList->packet[0].timeStamp > tickTime ? @"ahead" : @"behind");
+        if ( labs((long)packetList->packet[0].timeStamp - (long)tickTime) > SESecondsToHostTicks(1.0e-9) ) {
+            break;
+        }
+        tickTime = packetList->packet[0].timeStamp + tickDuration;
+    }
     
-    XCTAssertEqual(packet->length, 3);
-    XCTAssertEqual((SEMIDIMessage)packet->data[0], SEMIDIMessageSongPosition);
-    XCTAssertEqual(packet->timeStamp, thirdChangeApplyTime - 1);
-    beats = ((unsigned short)packet->data[2] << 7) | (unsigned short)packet->data[1];
+    XCTAssertTrue(foundNewTimeline);
+    XCTAssertEqualWithAccuracy(i - firstSegmentEnd, (SESecondsToHostTicks(secondRunInterval) / tickDuration), 10);
+    
+    // Second position change from here - verify that the song position was sent at the right time
+    packetList = [interface.sentMessages[i] bytes];
+    XCTAssertEqual(packetList->packet[0].length, 3);
+    XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageSongPosition);
+    XCTAssertEqual(packetList->packet[0].timeStamp, thirdChangeApplyTime - 1);
+    beats = ((unsigned short)packetList->packet[0].data[2] << 7) | (unsigned short)packetList->packet[0].data[1];
     positionInBeats = ceil((double)SEBeatsToHostTicks(thirdTimelinePosition, tempo) / (double)beatDuration);
     XCTAssertEqual(beats, positionInBeats);
     
     int secondSegmentEnd = i;
     
     i++;
-    BOOL foundNewTimeline;
-    for ( int index = 1; i < sentMessages.count-1; i++, time += tickDuration, index++ ) {
-        packetList = [sentMessages[i] bytes];
+    foundNewTimeline = NO;
+    for ( ; i<interface.sentMessages.count; i++ ) {
+        const MIDIPacketList * packetList = [interface.sentMessages[i] bytes];
+        if ( packetList->packet[0].data[0] != SEMIDIMessageClock ) break;
         
         if ( labs((long)packetList->packet[0].timeStamp - (long)time) > SESecondsToHostTicks(1.0e-8) ) {
             uint64_t sinceChange = labs((long)packetList->packet[0].timeStamp - (long)thirdChangeApplyTime);
             if ( (sinceChange % tickDuration) < SESecondsToHostTicks(1.0e-8) || (tickDuration - (sinceChange % tickDuration)) < SESecondsToHostTicks(1.0e-8) ) {
                 // This tick is in the new timeline - carry on
-                time = packetList->packet[0].timeStamp;
+                tickTime = packetList->packet[0].timeStamp;
                 foundNewTimeline = YES;
             }
         }
-        
-        XCTAssertEqual(packetList->packet[0].length, 1, @"Tick %d has wrong length", index);
-        XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageClock, @"Tick %d has wrong type", index);
+
         XCTAssertEqualWithAccuracy(packetList->packet[0].timeStamp,
-                                   time,
-                                   SESecondsToHostTicks(1.0e-9),
+                                   tickTime,
+                                   SESecondsToHostTicks(1.0e-3),
                                    @"Tick %d has wrong time (%lf s %@)",
-                                   index,
-                                   SEHostTicksToSeconds(labs((long)packetList->packet[0].timeStamp - (long)time)),
-                                   packetList->packet[0].timeStamp > time ? @"ahead" : @"behind");
-        
-        
-        if ( packetList->packet[0].length != 1
-            || labs((long)packetList->packet[0].timeStamp - (long)time) > SESecondsToHostTicks(1.0e-9)
-            || packetList->packet[0].data[0] != SEMIDIMessageClock ) {
+                                   i,
+                                   SEHostTicksToSeconds(labs((long)packetList->packet[0].timeStamp - (long)tickTime)),
+                                   packetList->packet[0].timeStamp > tickTime ? @"ahead" : @"behind");
+        if ( labs((long)packetList->packet[0].timeStamp - (long)tickTime) > SESecondsToHostTicks(1.0e-9) ) {
             break;
         }
+        tickTime = packetList->packet[0].timeStamp + tickDuration;
     }
     
     XCTAssertTrue(foundNewTimeline);
@@ -463,7 +495,6 @@
 
 
 @implementation SEMIDIClockSenderTestInterface
-@dynamic sortedSentMessages;
 
 -(instancetype)init {
     if ( !(self = [super init]) ) return nil;
@@ -479,14 +510,14 @@
 
 -(void)sendMIDIPacketList:(const MIDIPacketList *)packetList {
     @synchronized ( self ) {
-//        printf("%3lu / %llu:\t%x\t(%c %lfs)\n",
-//               _sentMessages.count,
-//               packetList->packet[0].timeStamp,
-//               packetList->packet[0].data[0],
-//               packetList->packet[0].timeStamp > _lastTimestamp ? '+' : '-',
-//               SEHostTicksToSeconds(packetList->packet[0].timeStamp > _lastTimestamp
-//                                            ? packetList->packet[0].timeStamp - _lastTimestamp
-//                                            : _lastTimestamp - packetList->packet[0].timeStamp));
+        printf("%3lu / %llu:\t%x\t(%c %lfs)\n",
+               _sentMessages.count,
+               packetList->packet[0].timeStamp,
+               packetList->packet[0].data[0],
+               packetList->packet[0].timeStamp > _lastTimestamp ? '+' : '-',
+               SEHostTicksToSeconds(packetList->packet[0].timeStamp > _lastTimestamp
+                                            ? packetList->packet[0].timeStamp - _lastTimestamp
+                                            : _lastTimestamp - packetList->packet[0].timeStamp));
         
         if ( packetList->packet[0].timeStamp != 0 && packetList->packet[0].timeStamp < SECurrentTimeInHostTicks() - SESecondsToHostTicks(0.02) ) {
             NSLog(@"MIDI packet has old timestamp %llu (%lf), should be >= now, %llu (%lf)",
@@ -499,17 +530,6 @@
         _lastTimestamp = packetList->packet[0].timeStamp;
         [(NSMutableArray*)_sentMessages addObject:[NSData dataWithBytes:packetList length:sizeof(MIDIPacketList) + ((packetList->numPackets-1) * sizeof(MIDIPacket))]];
     }
-}
-
--(NSArray *)sortedSentMessages {
-    return [_sentMessages sortedArrayUsingComparator:^NSComparisonResult(NSData * obj1, NSData * obj2) {
-        const MIDIPacketList * packetList1 = [obj1 bytes];
-        const MIDIPacketList * packetList2 = [obj2 bytes];
-        
-        return packetList1->packet[0].timeStamp < packetList2->packet[0].timeStamp ? NSOrderedAscending :
-               packetList1->packet[0].timeStamp > packetList2->packet[0].timeStamp ? NSOrderedDescending :
-               NSOrderedSame;
-    }];
 }
 
 @end
