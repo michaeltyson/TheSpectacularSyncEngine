@@ -36,7 +36,8 @@ static const int kMinSamplesBeforeTrustingZeroStdDev = 3;      // Min samples to
 static const double kOutlierThresholdRatio           = 3.5;    // Number of standard deviations beyond which we consider a sample an outlier
                                                                // A lower value lets us converge quickly to closer new values, but runs the risk of
                                                                // excluding useful samples in the presence of high jitter, causing convergence issues
-static const NSTimeInterval kMinimumOutlierThreshold = 1.0e-3; // Minimum threshold beyond which we consider a sample an outlier
+static const NSTimeInterval kMinimumEarlyOutlierThreshold = 1.0e-3; // Minimum threshold beyond which we consider a sample an outlier, if we've seen less
+                                                               // than kMinSamplesBeforeEvaluatingOutliers samples
 static const int kOutliersBeforeReset                = 3;      // We need to see this many outliers before we reset to converge to the new value
 static const int kMinSamplesBeforeStoringStandardDeviation = 24; // Min samples to observe before we can start storing standard deviation history
 static const int kStandardDeviationHistorySamples    = 10;     // How many standard deviation history entries to keep
@@ -186,6 +187,19 @@ typedef enum {
                 
             case SEMIDIMessageClock: {
                 
+                uint64_t previousTick = _lastTick;
+                _lastTick = timestamp;
+                _lastTickReceiveTime = SECurrentTimeInHostTicks();
+                
+                if ( !previousTick ) {
+                    // No prior tick - don't do anything until the next one
+                    if ( _primedAction ) {
+                        // Remember the timestamp for a pending action
+                        _primedActionTimestamp = timestamp;
+                    }
+                    break;
+                }
+                
                 // Process any primed actions
                 switch ( _primedAction ) {
                     case SEMIDIClockReceiverActionStart:
@@ -220,140 +234,138 @@ typedef enum {
                     }
                 }
                 
-                uint64_t previousTick = _lastTick;
-                _lastTick = timestamp;
-                _lastTickReceiveTime = SECurrentTimeInHostTicks();
+                if ( _primedActionTimestamp ) {
+                    // There's a prior tick we need to count
+                    _tickCount++;
+                }
                 
-                if ( previousTick ) {
+                // Determine interval since last tick, and calculate corresponding tempo
+                uint64_t interval = timestamp - previousTick;
+                
+                // Add to collected samples
+                SEMIDIClockReceiverSampleBufferIntegrateSample(&_tickSampleBuffer, interval);
+                int samplesSinceChange = SEMIDIClockReceiverSampleBufferSamplesSinceLastSignificantChange(&_tickSampleBuffer);
+                
+                // Determine source's relative standard deviation
+                double relativeStandardDeviation = ((double)SEMIDIClockReceiverSampleBufferStandardDeviation(&_tickSampleBuffer) / (double)interval) * 100.0;
+                _error = relativeStandardDeviation;
+                
+                // Calculate true interval from samples, and convert to tempo
+                interval = SEMIDIClockReceiverSampleBufferCalculatedValue(&_tickSampleBuffer);
+                double tempo = (double)SESecondsToHostTicks(60.0) / (double)(interval * SEMIDITicksPerBeat);
+                
+                // Update tempo history
+                if ( SEMIDIClockReceiverSampleBufferSignificantChangeHappened(&_tickSampleBuffer) ) {
+                    // We just saw a significant change - clear the tempo history
+                    for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
                     
-                    // Determine interval since last tick, and calculate corresponding tempo
-                    uint64_t interval = timestamp - previousTick;
-                    
-                    // Add to collected samples
-                    SEMIDIClockReceiverSampleBufferIntegrateSample(&_tickSampleBuffer, interval);
-                    int samplesSinceChange = SEMIDIClockReceiverSampleBufferSamplesSinceLastSignificantChange(&_tickSampleBuffer);
-                    
-                    // Determine source's relative standard deviation
-                    double relativeStandardDeviation = ((double)SEMIDIClockReceiverSampleBufferStandardDeviation(&_tickSampleBuffer) / (double)interval) * 100.0;
-                    _error = relativeStandardDeviation;
-                    
-                    // Calculate true interval from samples, and convert to tempo
-                    interval = SEMIDIClockReceiverSampleBufferCalculatedValue(&_tickSampleBuffer);
-                    double tempo = (double)SESecondsToHostTicks(60.0) / (double)(interval * SEMIDITicksPerBeat);
-                    
-                    // Update tempo history
-                    if ( SEMIDIClockReceiverSampleBufferSignificantChangeHappened(&_tickSampleBuffer) ) {
-                        // We just saw a significant change - clear the tempo history
-                        for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
-                        
-                    } else if ( samplesSinceChange >= kMinSamplesBeforeRecordingTempoHistory ) {
-                        // Add to history
-                        uint64_t tempoHistoryBucketDuration = SESecondsToHostTicks(1.0);
-                        int tempoHistoryBucket = (timestamp / tempoHistoryBucketDuration) % kTempoHistoryLength;
-                        if ( tempoHistoryBucket != _lastTempoHistoryBucket ) {
-                            // Clear this old bucket
-                            _tempoHistory[tempoHistoryBucket].max = 0.0;
-                            _tempoHistory[tempoHistoryBucket].min = DBL_MAX;
-                            _lastTempoHistoryBucket = tempoHistoryBucket;
-                        }
-                        _tempoHistory[tempoHistoryBucket].max = MAX(tempo, _tempoHistory[tempoHistoryBucket].max);
-                        _tempoHistory[tempoHistoryBucket].min = MIN(tempo, _tempoHistory[tempoHistoryBucket].min);
+                } else if ( samplesSinceChange >= kMinSamplesBeforeRecordingTempoHistory ) {
+                    // Add to history
+                    uint64_t tempoHistoryBucketDuration = SESecondsToHostTicks(1.0);
+                    int tempoHistoryBucket = (timestamp / tempoHistoryBucketDuration) % kTempoHistoryLength;
+                    if ( tempoHistoryBucket != _lastTempoHistoryBucket ) {
+                        // Clear this old bucket
+                        _tempoHistory[tempoHistoryBucket].max = 0.0;
+                        _tempoHistory[tempoHistoryBucket].min = DBL_MAX;
+                        _lastTempoHistoryBucket = tempoHistoryBucket;
                     }
+                    _tempoHistory[tempoHistoryBucket].max = MAX(tempo, _tempoHistory[tempoHistoryBucket].max);
+                    _tempoHistory[tempoHistoryBucket].min = MIN(tempo, _tempoHistory[tempoHistoryBucket].min);
+                }
+                
+                // Determine how much rounding to perform on tempo, to achieve a stable value
+                int roundingCoefficient = 5;
+                if ( relativeStandardDeviation <= kTrustedStandardDeviation
+                        && SEMIDIClockReceiverSampleBufferSamplesSeen(&_tickSampleBuffer) > kMinSamplesBeforeTrustingZeroStdDev ) {
                     
-                    // Determine how much rounding to perform on tempo, to achieve a stable value
-                    int roundingCoefficient = 5;
-                    if ( relativeStandardDeviation <= kTrustedStandardDeviation
-                            && SEMIDIClockReceiverSampleBufferSamplesSeen(&_tickSampleBuffer) > kMinSamplesBeforeTrustingZeroStdDev ) {
-                        
-                        // We trust this source - just round to avoid minor floating-point errors
+                    // We trust this source - just round to avoid minor floating-point errors
+                    roundingCoefficient = 0;
+                } else {
+                    
+                    // Untrusted source
+                    if ( samplesSinceChange >= kMinSamplesBeforeReportingTempo ) {
+                        // Only check history if we've got enough samples
                         roundingCoefficient = 0;
-                    } else {
-                        
-                        // Untrusted source
-                        if ( samplesSinceChange >= kMinSamplesBeforeReportingTempo ) {
-                            // Only check history if we've got enough samples
-                            roundingCoefficient = 0;
-                            for ( ; roundingCoefficient < (sizeof(kRoundingCoefficients)/sizeof(double))-1; roundingCoefficient++ ) {
-                                // For each rounding coefficient (starting small), compare the rounded tempo entries with each other.
-                                // If, for a given rounding coefficient, the rounded tempo entries all match, then we'll round using this coefficient.
-                                BOOL acceptableRounding = YES;
-                                double comparisonValue = 0.0;
-                                for ( int i=0; i<kTempoHistoryLength; i++ ) {
-                                    if ( _tempoHistory[i].max == 0.0 ) continue;
-                                    
-                                    if ( comparisonValue == 0.0 ) {
-                                        // Use the first value we come to for comparison
-                                        comparisonValue = round(_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
-                                    }
-                                    
-                                    // Compare the value bounds for this entry against our comparison value
-                                    double roundedMaxValue = round(_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
-                                    double roundedMinValue = round(_tempoHistory[i].min / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
-                                    
-                                    if ( fabs(roundedMaxValue - comparisonValue) > 1.0e-5 || fabs(roundedMinValue - comparisonValue) > 1.0e-5 ) {
-                                        // This rounding coefficient doesn't give us a stable result - move on
-                                        acceptableRounding = NO;
-                                        break;
-                                    }
+                        for ( ; roundingCoefficient < (sizeof(kRoundingCoefficients)/sizeof(double))-1; roundingCoefficient++ ) {
+                            // For each rounding coefficient (starting small), compare the rounded tempo entries with each other.
+                            // If, for a given rounding coefficient, the rounded tempo entries all match, then we'll round using this coefficient.
+                            BOOL acceptableRounding = YES;
+                            double comparisonValue = 0.0;
+                            for ( int i=0; i<kTempoHistoryLength; i++ ) {
+                                if ( _tempoHistory[i].max == 0.0 ) continue;
+                                
+                                if ( comparisonValue == 0.0 ) {
+                                    // Use the first value we come to for comparison
+                                    comparisonValue = round(_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
                                 }
                                 
-                                if ( acceptableRounding ) {
+                                // Compare the value bounds for this entry against our comparison value
+                                double roundedMaxValue = round(_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                                double roundedMinValue = round(_tempoHistory[i].min / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                                
+                                if ( fabs(roundedMaxValue - comparisonValue) > 1.0e-5 || fabs(roundedMinValue - comparisonValue) > 1.0e-5 ) {
+                                    // This rounding coefficient doesn't give us a stable result - move on
+                                    acceptableRounding = NO;
                                     break;
                                 }
                             }
                             
+                            if ( acceptableRounding ) {
+                                break;
+                            }
                         }
+                        
+                    }
+                }
+                
+                // Apply rounding
+                tempo = round(tempo / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                
+                _sampleCountSinceLastTempoUpdate++;
+                
+                if ( !_receivingTempo || !_tempo || (fabs(_tempo - tempo) >= kTempoChangeUpdateThreshold) ) {
+                    // A significant tempo change happened. Report it (with rate limiting)
+                    BOOL reportUpdate = NO;
+                    
+                    if ( relativeStandardDeviation <= kTrustedStandardDeviation
+                            && SEMIDIClockReceiverSampleBufferSamplesSeen(&_tickSampleBuffer) > kMinSamplesBeforeTrustingZeroStdDev ) {
+                        // Trust the source - it's very accurate - so report any change immediately
+                        reportUpdate = YES;
+                        
+                    } else if ( (!_tempo && _clockRunning) || samplesSinceChange == kMinSamplesBeforeReportingTempo ) {
+                        // Report when tempo is needed but absent, or shortly after we've seen a significant change
+                        reportUpdate = YES;
+                        
+                    } else if ( _sampleCountSinceLastTempoUpdate > kMinSamplesBetweenTempoUpdates && samplesSinceChange >= kMinSamplesBeforeReportingTempo ) {
+                        // Report every so often
+                        reportUpdate = YES;
                     }
                     
-                    // Apply rounding
-                    tempo = round(tempo / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
-                    
-                    _sampleCountSinceLastTempoUpdate++;
-                    
-                    if ( !_receivingTempo || !_tempo || (fabs(_tempo - tempo) >= kTempoChangeUpdateThreshold) ) {
-                        // A significant tempo change happened. Report it (with rate limiting)
-                        BOOL reportUpdate = NO;
+                    if ( reportUpdate ) {
+                        #ifdef DEBUG_LOGGING
+                        NSLog(@"Tempo is now %lf (was %lf)", tempo, _tempo);
+                        #endif
                         
-                        if ( relativeStandardDeviation <= kTrustedStandardDeviation
-                                && SEMIDIClockReceiverSampleBufferSamplesSeen(&_tickSampleBuffer) > kMinSamplesBeforeTrustingZeroStdDev ) {
-                            // Trust the source - it's very accurate - so report any change immediately
-                            reportUpdate = YES;
-                            
-                        } else if ( (!_tempo && _clockRunning) || samplesSinceChange == kMinSamplesBeforeReportingTempo ) {
-                            // Report when tempo is needed but absent, or shortly after we've seen a significant change
-                            reportUpdate = YES;
-                            
-                        } else if ( _sampleCountSinceLastTempoUpdate > kMinSamplesBetweenTempoUpdates && samplesSinceChange >= kMinSamplesBeforeReportingTempo ) {
-                            // Report every so often
-                            reportUpdate = YES;
-                        }
-                        
-                        if ( reportUpdate ) {
-                            #ifdef DEBUG_LOGGING
-                            NSLog(@"Tempo is now %lf (was %lf)", tempo, _tempo);
-                            #endif
-                            
-                            _tempo = tempo;
-                            _sampleCountSinceLastTempoUpdate = 0;
-                            BOOL firstSample = !_receivingTempo;
-                            _receivingTempo = YES;
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                if ( firstSample ) {
-                                    [self willChangeValueForKey:@"receivingTempo"];
-                                    [self didChangeValueForKey:@"receivingTempo"];
-                                    [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStartTempoSyncNotification
-                                                                                        object:self
-                                                                                      userInfo:@{ SEMIDIClockReceiverTempoKey: @(tempo),
-                                                                                                  SEMIDIClockReceiverTimestampKey: @(timestamp) }];
-                                }
-                                [self willChangeValueForKey:@"tempo"];
-                                [self didChangeValueForKey:@"tempo"];
-                                [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidChangeTempoNotification
+                        _tempo = tempo;
+                        _sampleCountSinceLastTempoUpdate = 0;
+                        BOOL firstSample = !_receivingTempo;
+                        _receivingTempo = YES;
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            if ( firstSample ) {
+                                [self willChangeValueForKey:@"receivingTempo"];
+                                [self didChangeValueForKey:@"receivingTempo"];
+                                [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStartTempoSyncNotification
                                                                                     object:self
                                                                                   userInfo:@{ SEMIDIClockReceiverTempoKey: @(tempo),
                                                                                               SEMIDIClockReceiverTimestampKey: @(timestamp) }];
-                            });
-                        }
+                            }
+                            [self willChangeValueForKey:@"tempo"];
+                            [self didChangeValueForKey:@"tempo"];
+                            [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidChangeTempoNotification
+                                                                                object:self
+                                                                              userInfo:@{ SEMIDIClockReceiverTempoKey: @(tempo),
+                                                                                          SEMIDIClockReceiverTimestampKey: @(timestamp) }];
+                        });
                     }
                 }
                 
@@ -369,46 +381,41 @@ typedef enum {
                 }
                 
                 if ( _primedAction ) {
-                    // Finalise primed actions (as long as we've seen at least one tick interval)
-                    if ( !previousTick ) {
-                        // No tick interval seen - we'll process this action next tick, so remember the associated timestamp
-                        _primedActionTimestamp = timestamp;
-                    } else {
-                        uint64_t actionTimestamp = _primedActionTimestamp ? _primedActionTimestamp : timestamp;
-                        switch ( _primedAction ) {
-                            case SEMIDIClockReceiverActionStart:
-                            case SEMIDIClockReceiverActionContinue: {
+                    // Finalise primed actions
+                    uint64_t actionTimestamp = _primedActionTimestamp ? _primedActionTimestamp : timestamp;
+                    switch ( _primedAction ) {
+                        case SEMIDIClockReceiverActionStart:
+                        case SEMIDIClockReceiverActionContinue: {
+                            
+                            // Perform notifications
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                [self willChangeValueForKey:@"clockRunning"];
+                                [self didChangeValueForKey:@"clockRunning"];
                                 
-                                // Perform notifications
-                                dispatch_async(dispatch_get_main_queue(), ^{
-                                    [self willChangeValueForKey:@"clockRunning"];
-                                    [self didChangeValueForKey:@"clockRunning"];
-                                    
-                                    [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStartNotification
-                                                                                        object:self
-                                                                                      userInfo:@{ SEMIDIClockReceiverTimestampKey: @(actionTimestamp) }];
-                                });
-                                break;
-                            }
-                            case SEMIDIClockReceiverActionSeek: {
-                                
-                                // Perform notifications
-                                dispatch_async(dispatch_get_main_queue(), ^{
-                                    [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidLiveSeekNotification
-                                                                                        object:self
-                                                                                      userInfo:@{ SEMIDIClockReceiverTimestampKey: @(actionTimestamp) }];
-                                });
-                                
-                                break;
-                            }
-                            default: {
-                                break;
-                            }
+                                [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStartNotification
+                                                                                    object:self
+                                                                                  userInfo:@{ SEMIDIClockReceiverTimestampKey: @(actionTimestamp) }];
+                            });
+                            break;
                         }
-                        
-                        _primedAction = SEMIDIClockReceiverActionNone;
-                        _primedActionTimestamp = 0;
+                        case SEMIDIClockReceiverActionSeek: {
+                            
+                            // Perform notifications
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidLiveSeekNotification
+                                                                                    object:self
+                                                                                  userInfo:@{ SEMIDIClockReceiverTimestampKey: @(actionTimestamp) }];
+                            });
+                            
+                            break;
+                        }
+                        default: {
+                            break;
+                        }
                     }
+                    
+                    _primedAction = SEMIDIClockReceiverActionNone;
+                    _primedActionTimestamp = 0;
                 }
                 
                 if ( !_timeout ) {
@@ -553,7 +560,10 @@ static void SEMIDIClockReceiverSampleBufferIntegrateSample(SEMIDIClockReceiverSa
     } else {
         
         // It's an outlier if it's outside our threshold past the observed average
-        uint64_t outlierThreshold = MAX(kOutlierThresholdRatio * buffer->standardDeviation, SESecondsToHostTicks(kMinimumOutlierThreshold));
+        uint64_t outlierThreshold = kOutlierThresholdRatio * buffer->standardDeviation;
+        if ( buffer->seenSamples < kMinSamplesBeforeEvaluatingOutliers && outlierThreshold < SESecondsToHostTicks(kMinimumEarlyOutlierThreshold) ) {
+            outlierThreshold = SESecondsToHostTicks(kMinimumEarlyOutlierThreshold);
+        }
         outlier = sample > buffer->mean + outlierThreshold
                     || sample < (buffer->mean < outlierThreshold ? 0 : buffer->mean - outlierThreshold);
         
@@ -609,7 +619,7 @@ static void SEMIDIClockReceiverSampleBufferIntegrateSample(SEMIDIClockReceiverSa
     
     #ifdef DEBUG_LOGGING
     // Diagnosis logging
-    if ( sample < 1e8 ) {
+    if ( sample < 1e9 ) {
         // Tick interval
         NSLog(@"%@%llu (%0.3lf BPM), avg %llu (%0.3lf BPM), stddev %llu (%0.2lf%%)",
               outlier ? @"outlier " : @"",

@@ -178,7 +178,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     XCTAssertEqual([((NSNotification*)_observer.notifications[0]).userInfo[SEMIDIClockReceiverTimestampKey] unsignedLongLongValue], clockStartTime);
     [_observer reset];
     
-    // Send more ticks (the first starts the clock)
+    // Send more ticks
     time += tickDuration;
     for ( int i=0; i<tickCount-1; i++, time += tickDuration ) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
@@ -331,8 +331,6 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     // Verify first position
     double firstPosition = (double)tickCount / (double)SEMIDITicksPerBeat;
     XCTAssertEqualWithAccuracy([_receiver timelinePositionForTime:time], firstPosition, 1.0e-6);
-    
-    NSLog(@"change tempo");
     
     // Change tempo
     tempo = 250;
