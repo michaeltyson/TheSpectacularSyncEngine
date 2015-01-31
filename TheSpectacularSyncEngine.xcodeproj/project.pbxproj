@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4C033EAE1A7C4FE5002200A2 /* SEIntegrationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C033EAD1A7C4FE5002200A2 /* SEIntegrationTests.m */; };
+		4C033EB11A7C50C1002200A2 /* SETestObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C033EB01A7C50C1002200A2 /* SETestObserver.m */; };
 		4C04766C1A53E19900894457 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C04766B1A53E19900894457 /* main.m */; };
 		4C04766F1A53E19900894457 /* DSAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C04766E1A53E19900894457 /* DSAppDelegate.m */; };
 		4C0476721A53E19900894457 /* DSMainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C0476711A53E19900894457 /* DSMainViewController.m */; };
@@ -57,6 +59,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4C033EAD1A7C4FE5002200A2 /* SEIntegrationTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEIntegrationTests.m; sourceTree = "<group>"; };
+		4C033EAF1A7C50C1002200A2 /* SETestObserver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SETestObserver.h; sourceTree = "<group>"; };
+		4C033EB01A7C50C1002200A2 /* SETestObserver.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SETestObserver.m; sourceTree = "<group>"; };
 		4C0476661A53E19900894457 /* Syncy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Syncy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C04766A1A53E19900894457 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4C04766B1A53E19900894457 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -224,8 +229,11 @@
 		4C4438D11A5407C800176535 /* Unit Tests */ = {
 			isa = PBXGroup;
 			children = (
+				4C033EAF1A7C50C1002200A2 /* SETestObserver.h */,
+				4C033EB01A7C50C1002200A2 /* SETestObserver.m */,
 				4C4438D71A5407C800176535 /* SEMIDIClockSenderTests.m */,
 				4C8D302E1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m */,
+				4C033EAD1A7C4FE5002200A2 /* SEIntegrationTests.m */,
 				4C4438D21A5407C800176535 /* Supporting Files */,
 			);
 			name = "Unit Tests";
@@ -301,7 +309,7 @@
 			);
 			dependencies = (
 			);
-			name = "Syncy";
+			name = Syncy;
 			productName = Syncy;
 			productReference = 4C0476661A53E19900894457 /* Syncy.app */;
 			productType = "com.apple.product-type.application";
@@ -425,8 +433,10 @@
 				4C27A8851A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.m in Sources */,
 				4C27A87F1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m in Sources */,
 				4C27A8891A5F690800BE0518 /* SEMIDIDestinationsTableViewController.m in Sources */,
+				4C033EB11A7C50C1002200A2 /* SETestObserver.m in Sources */,
 				4C27A88B1A5F690800BE0518 /* SEMIDISourcesTableViewController.m in Sources */,
 				4C27A8831A5F690800BE0518 /* SEMIDIClockSender.m in Sources */,
+				4C033EAE1A7C4FE5002200A2 /* SEIntegrationTests.m in Sources */,
 				4C8D302F1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

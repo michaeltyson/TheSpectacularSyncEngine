@@ -10,6 +10,7 @@
 #import <XCTest/XCTest.h>
 #import "SEMIDIClockReceiver.h"
 #import <CoreMIDI/CoreMIDI.h>
+#import "SETestObserver.h"
 
 // Gaussian random code
 typedef struct {
@@ -60,16 +61,9 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     return first;
 }
 
-@interface SEMIDIClockReceiverObserver : NSObject
--(void)reset;
--(void)notification:(NSNotification*)notification;
-@property (nonatomic) NSArray *observations;
-@property (nonatomic) NSArray *notifications;
-@end
-
 @interface SEMIDIClockReceiverTests : XCTestCase
 @property SEMIDIClockReceiver * receiver;
-@property SEMIDIClockReceiverObserver * observer;
+@property SETestObserver * observer;
 @end
 
 @implementation SEMIDIClockReceiverTests
@@ -79,7 +73,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     
     self.receiver = [SEMIDIClockReceiver new];
     
-    self.observer = [SEMIDIClockReceiverObserver new];
+    self.observer = [SETestObserver new];
     
     for ( NSString * key in @[ @"receivingTempo", @"clockRunning", @"tempo"] ) {
         [_receiver addObserver:_observer forKeyPath:key options:0 context:NULL];
@@ -682,32 +676,6 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     XCTAssertEqualWithAccuracy([_receiver timelinePositionForTime:time], (double)tickCount / (double)SEMIDITicksPerBeat, 1.0e-3);
     
 
-}
-
-@end
-
-@implementation SEMIDIClockReceiverObserver
-
--(instancetype)init {
-    if ( !(self = [super init]) ) return nil;
-    
-    self.observations = [NSMutableArray array];
-    self.notifications = [NSMutableArray array];
-    
-    return self;
-}
-
--(void)reset {
-    [(NSMutableArray*)_notifications removeAllObjects];
-    [(NSMutableArray*)_observations removeAllObjects];
-}
-
--(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
-    [(NSMutableArray*)_observations addObject:keyPath];
-}
-
--(void)notification:(NSNotification*)notification {
-    [(NSMutableArray*)_notifications addObject:notification];
 }
 
 @end
