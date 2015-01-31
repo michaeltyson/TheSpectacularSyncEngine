@@ -195,16 +195,10 @@
     // Go through initial ticks, and make sure the new timeline came into effect
     int i=0;
     uint64_t tickTime = 0;
-    BOOL foundNewTimeline = NO;
     for ( ; i<interface.sentMessages.count; i++ ) {
         const MIDIPacketList * packetList = [interface.sentMessages[i] bytes];
         if ( packetList->packet[0].data[0] != SEMIDIMessageClock ) break;
         if ( tickTime ) {
-            if ( (startTime - packetList->packet[0].timeStamp) % tickDuration == 0 ) {
-                foundNewTimeline = YES;
-                tickTime = packetList->packet[0].timeStamp;
-            }
-            
             XCTAssertEqualWithAccuracy(packetList->packet[0].timeStamp,
                                        tickTime,
                                        SESecondsToHostTicks(1.0e-3),
@@ -217,7 +211,6 @@
     }
     
     XCTAssertTrue(i < interface.sentMessages.count);
-    XCTAssertTrue(foundNewTimeline);
     
     XCTAssertEqualWithAccuracy(i, SESecondsToHostTicks(firstRunInterval) / tickDuration, 10);
     
@@ -511,7 +504,7 @@
 -(void)sendMIDIPacketList:(const MIDIPacketList *)packetList {
     @synchronized ( self ) {
         printf("%3lu / %llu:\t%x\t(%c %lfs)\n",
-               _sentMessages.count,
+               (unsigned long)_sentMessages.count,
                packetList->packet[0].timeStamp,
                packetList->packet[0].data[0],
                packetList->packet[0].timeStamp > _lastTimestamp ? '+' : '-',

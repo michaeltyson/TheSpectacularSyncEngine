@@ -44,6 +44,8 @@ static const int kMaxPendingMessages                        = 10;     // Size of
 }
 
 -(void)dealloc {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(sendSongPositionDelayed) object:nil];
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(startThread) object:nil];
     if ( _thread ) {
         [_thread cancel];
         while ( !_thread.isFinished ) {
@@ -136,17 +138,17 @@ static const int kMaxPendingMessages                        = 10;     // Size of
         double beatsToMIDIBeats = (double)SEMIDITicksPerBeat / (double)SEMIDITicksPerSongPositionBeat;
         
         if ( !_started && !start ) {
-            // Just send song position
-            if ( !applyTime ) applyTime = SECurrentTimeInHostTicks();
-            int totalBeats = round(timelinePosition * beatsToMIDIBeats);
-            [self enqueueMessage:(unsigned char[3]){SEMIDIMessageSongPosition, totalBeats & 0x7F, (totalBeats >> 7) & 0x7F}
-                          length:3
-                            time:applyTime];
-            
             // Cue this position for when we start
             _positionAtStart = timelinePosition;
+            
+            // Send song position in next run loop (delayed, in case we're just about to start the clock,
+            // in which case we want to send the song position at the same timestamp
+            [self performSelector:@selector(sendSongPositionDelayed) withObject:nil afterDelay:0];
+            
             return applyTime;
         }
+        
+        [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(sendSongPositionDelayed) object:nil];
         
         if ( !applyTime ) {
             // We've been left to choose an apply time ourselves: choose the next tick time,
@@ -190,13 +192,14 @@ static const int kMaxPendingMessages                        = 10;     // Size of
             _timeBase = timeBase;
         }
         
-        if ( start ) {
+        if ( !_started && start ) {
             [self enqueueMessage:(unsigned char[1]){ totalBeats > 0.0 ? SEMIDIMessageContinue : SEMIDIMessageClockStart }
                           length:1
                             time:applyTime + timeUntilNextMIDIBeat - 1 /* force ordering before tick */];
             
             _positionAtStart = 0;
             self.started = YES;
+            _nextTickTime = applyTime + timeUntilNextMIDIBeat;
             
             if ( !_thread ) {
                 [self startThread];
@@ -236,6 +239,14 @@ static const int kMaxPendingMessages                        = 10;     // Size of
 
 -(MIDIPacketList *)pendingMessages {
     return _pendingMessages;
+}
+
+-(void)sendSongPositionDelayed {
+    double beatsToMIDIBeats = (double)SEMIDITicksPerBeat / (double)SEMIDITicksPerSongPositionBeat;
+    int totalBeats = round(_positionAtStart * beatsToMIDIBeats);
+    [self enqueueMessage:(unsigned char[3]){SEMIDIMessageSongPosition, totalBeats & 0x7F, (totalBeats >> 7) & 0x7F}
+                  length:3
+                    time:SECurrentTimeInHostTicks()];
 }
 
 @end
