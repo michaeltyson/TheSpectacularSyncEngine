@@ -114,7 +114,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify state change
@@ -143,7 +143,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     MIDIPacket *packet = MIDIPacketListInit(packetList);
     Byte startMessage[] = { SEMIDIMessageClockStart };
     packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time-1, sizeof(startMessage), startMessage);
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     
     // Shouldn't get any notifications just yet
     XCTAssertFalse(_receiver.clockRunning);
@@ -157,7 +157,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     packet = MIDIPacketListInit(packetList);
     Byte tickMessage[] = { SEMIDIMessageClock };
     packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     
     // Verify state change
     XCTAssertTrue(_receiver.clockRunning);
@@ -178,7 +178,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo and timeline correct, still
@@ -194,7 +194,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     int beats = round((newPosition * SEMIDITicksPerBeat) / (double)SEMIDITicksPerSongPositionBeat);
     Byte positionChangeMessage[] = { SEMIDIMessageSongPosition, beats & 0x7F, (beats >> 7) & 0x7F };
     packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time-1, sizeof(positionChangeMessage), positionChangeMessage);
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     
     // Should be no change yet
     XCTAssertEqualWithAccuracy([_receiver timelinePositionForTime:clockStartTime + SEBeatsToHostTicks(4.0, tempo)], 4.0, 1.0e-6);
@@ -202,7 +202,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     // Send next tick to apply
     packet = MIDIPacketListInit(packetList);
     packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     
     // Verify state change
     XCTAssertEqualWithAccuracy([_receiver timelinePositionForTime:newPositionChangeTime], newPosition, 1.0e-6);
@@ -222,7 +222,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify timeline and tempo
@@ -234,7 +234,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     packet = MIDIPacketListInit(packetList);
     Byte stopMessage[] = { SEMIDIMessageClockStop };
     packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(stopMessage), stopMessage);
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
 
     // Verify state change
     XCTAssertFalse(_receiver.clockRunning);
@@ -266,7 +266,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo
@@ -280,7 +280,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify new tempo correct
@@ -302,7 +302,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo
@@ -312,14 +312,14 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     MIDIPacket *packet = MIDIPacketListInit(packetList);
     Byte startMessage[] = { SEMIDIMessageClockStart };
     packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time-1, sizeof(startMessage), startMessage);
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     
     // Send more ticks
     for ( int i=0; i<tickCount; i++, time += tickDuration ) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify first position
@@ -334,7 +334,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify second position
@@ -359,7 +359,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo
@@ -370,14 +370,14 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     MIDIPacket *packet = MIDIPacketListInit(packetList);
     Byte startMessage[] = { SEMIDIMessageClockStart };
     packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time-1, sizeof(startMessage), startMessage);
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     
     // Send some more ticks
     for ( int i=0; i<tickCount; i++, time += tickDuration ) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo constant still
@@ -394,7 +394,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     int beats = ceil((newPosition * SEMIDITicksPerBeat) / (double)SEMIDITicksPerSongPositionBeat);
     Byte positionChangeMessage[] = { SEMIDIMessageSongPosition, beats & 0x7F, (beats >> 7) & 0x7F };
     packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time-1, sizeof(positionChangeMessage), positionChangeMessage);
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     
     // Adjust next tick time to factor in non-integral amount
     uint64_t beatDuration = tickDuration * SEMIDITicksPerSongPositionBeat;
@@ -410,7 +410,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo constant still
@@ -434,7 +434,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo
@@ -444,7 +444,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     MIDIPacket *packet = MIDIPacketListInit(packetList);
     Byte tickMessage[] = { SEMIDIMessageClock };
     packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time + (tickDuration * 0.25), sizeof(tickMessage), tickMessage);
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     
     // Verify tempo constant still
     XCTAssertEqualWithAccuracy(_receiver.tempo, tempo, 1.0e-9);
@@ -455,7 +455,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo constant still
@@ -475,7 +475,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, 0, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
         mach_wait_until(time + tickDuration);
     }
     
@@ -500,7 +500,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time, sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo
@@ -524,7 +524,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time + TPMCGaussianRandomNext(&gauss), sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo
@@ -536,7 +536,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time + TPMCGaussianRandomNext(&gauss), sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo
@@ -556,7 +556,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time + TPMCGaussianRandomNext(&gauss), sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify rapid approximate convergence to new tempo
@@ -568,7 +568,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time + TPMCGaussianRandomNext(&gauss), sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo
@@ -594,7 +594,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(&packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(&packetList, sizeof(packetList), packet, time + TPMCGaussianRandomNext(&gauss), sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:&packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, &packetList);
     }
     
     // Verify tempo, rounded to closest 0.1
@@ -620,7 +620,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(&packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(&packetList, sizeof(packetList), packet, time + TPMCGaussianRandomNext(&gauss), sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:&packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, &packetList);
     }
     
     // Verify tempo
@@ -649,7 +649,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time + TPMCGaussianRandomNext(&gauss), sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify tempo
@@ -660,7 +660,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     MIDIPacket *packet = MIDIPacketListInit(packetList);
     Byte startMessage[] = { SEMIDIMessageClockStart };
     packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time-1, sizeof(startMessage), startMessage);
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     
     // Send more ticks
     tickCount = 72;
@@ -668,7 +668,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
         MIDIPacket *packet = MIDIPacketListInit(packetList);
         Byte tickMessage[] = { SEMIDIMessageClock };
         packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time + TPMCGaussianRandomNext(&gauss), sizeof(tickMessage), tickMessage);
-        [_receiver receivePacketList:packetList];
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
     }
     
     // Verify timeline position

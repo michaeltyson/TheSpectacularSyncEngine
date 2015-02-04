@@ -25,6 +25,9 @@ NSString * const SEMIDIClockReceiverDidChangeTempoNotification = @"SEMIDIClockRe
 NSString * const SEMIDIClockReceiverTimestampKey = @"timestamp";
 NSString * const SEMIDIClockReceiverTempoKey = @"tempo";
 
+static const NSTimeInterval kIdlePollInterval        = 0.1;    // How often to poll on the main thread for events, while idle
+static const NSTimeInterval kActivePollInterval      = 0.05;   // How often to poll on the main thread for events, while actively receiving
+static const int kEventBufferSize                    = 10;     // Size of event buffer, used to notify main thread about events
 static const int kSampleBufferSize                   = 96;     // Number of samples to keep at a time. A higher value runs the risk of a longer
                                                                // time to converge to new values; a lower value runs the risk of not converging to
                                                                // constant values.
@@ -60,33 +63,47 @@ typedef struct {
     int sampleCountSinceLastSignificantChange;
     BOOL significantChange;
     uint64_t standardDeviationHistory[kStandardDeviationHistorySamples];
-} SEMIDIClockReceiverSampleBuffer;
+} SESampleBuffer;
 
 typedef enum {
-    SEMIDIClockReceiverActionNone,
-    SEMIDIClockReceiverActionStart,
-    SEMIDIClockReceiverActionContinue,
-    SEMIDIClockReceiverActionSeek
-} SEMIDIClockReceiverAction;
+    SEActionNone,
+    SEActionStart,
+    SEActionContinue,
+    SEActionSeek
+} SEAction;
+
+typedef enum {
+    SEEventTypeNone,
+    SEEventTypeStart,
+    SEEventTypeStop,
+    SEEventTypeTempo,
+    SEEventTypeSeek
+} SEEventType;
+
+typedef struct {
+    SEEventType type;
+    uint64_t timestamp;
+} SEEvent;
 
 @interface SEMIDIClockReceiver () {
+    SEEvent _eventBuffer[kEventBufferSize];
     int _tickCount;
     uint64_t _lastTick;
     uint64_t _timeBase;
     uint64_t _lastTickReceiveTime;
     BOOL _clockRunning;
     BOOL _receivingTempo;
-    SEMIDIClockReceiverAction _primedAction;
+    SEAction _primedAction;
     uint64_t _primedActionTimestamp;
     int _savedSongPosition;
     int _sampleCountSinceLastTempoUpdate;
-    SEMIDIClockReceiverSampleBuffer _tickSampleBuffer;
-    SEMIDIClockReceiverSampleBuffer _timeBaseSampleBuffer;
+    SESampleBuffer _tickSampleBuffer;
+    SESampleBuffer _timeBaseSampleBuffer;
     double _error;
     struct { double min; double max; } _tempoHistory[kTempoHistoryLength];
     int _lastTempoHistoryBucket;
 }
-@property (nonatomic) NSTimer * timeout;
+@property (nonatomic) NSTimer * eventPollTimer;
 @end
 
 @implementation SEMIDIClockReceiver
@@ -96,20 +113,23 @@ typedef enum {
 -(instancetype)init {
     if ( !(self = [super init]) ) return nil;
     
-    SEMIDIClockReceiverSampleBufferClear(&_tickSampleBuffer);
-    SEMIDIClockReceiverSampleBufferClear(&_timeBaseSampleBuffer);
+    SESampleBufferClear(&_tickSampleBuffer);
+    SESampleBufferClear(&_timeBaseSampleBuffer);
     for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
+    self.eventPollTimer = [NSTimer scheduledTimerWithTimeInterval:kIdlePollInterval
+                                                           target:[[SEWeakRetainingProxy alloc] initWithTarget:self]
+                                                         selector:@selector(pollForEvents)
+                                                         userInfo:nil
+                                                          repeats:YES];
     
     return self;
 }
 
 -(void)dealloc {
-    if ( _timeout ) {
-        [_timeout invalidate];
-    }
+    [_eventPollTimer invalidate];
 }
 
--(void)receivePacketList:(const MIDIPacketList *)packetList {
+void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceiver * THIS, const MIDIPacketList * packetList) {
     const MIDIPacket *packet = &packetList->packet[0];
     for ( int index = 0; index < packetList->numPackets; index++, packet = MIDIPacketNext(packet) ) {
 
@@ -135,16 +155,16 @@ typedef enum {
         switch ( packet->data[0] ) {
             case SEMIDIMessageClockStart:
             case SEMIDIMessageContinue: {
-                if ( _timeBase || _primedAction == SEMIDIClockReceiverActionStart || _primedAction == SEMIDIClockReceiverActionContinue ) {
+                if ( THIS->_timeBase || THIS->_primedAction == SEActionStart || THIS->_primedAction == SEActionContinue ) {
                     continue;
                 }
                 
                 // Prepare to start/continue
-                _primedAction = packet->data[0] == SEMIDIMessageClockStart ? SEMIDIClockReceiverActionStart : SEMIDIClockReceiverActionContinue;
+                THIS->_primedAction = packet->data[0] == SEMIDIMessageClockStart ? SEActionStart : SEActionContinue;
                 break;
             }
             case SEMIDIMessageClockStop: {
-                if ( !_timeBase ) {
+                if ( !THIS->_timeBase ) {
                     continue;
                 }
                 
@@ -152,21 +172,11 @@ typedef enum {
                 OSMemoryBarrier();
                 
                 // Stop
-                _timeBase = 0;
-                _tickCount = 0;
-                _clockRunning = NO;
+                THIS->_timeBase = 0;
+                THIS->_tickCount = 0;
+                THIS->_clockRunning = NO;
                 
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    if ( _timeout ) {
-                        [_timeout invalidate];
-                        self.timeout = nil;
-                    }
-                    [self willChangeValueForKey:@"clockRunning"];
-                    [self didChangeValueForKey:@"clockRunning"];
-                    [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStopNotification
-                                                                        object:self
-                                                                      userInfo:@{ SEMIDIClockReceiverTimestampKey: @(timestamp) }];
-                });
+                SEMIDIClockReceiverPushEvent(THIS, SEEventTypeStop, timestamp);
                 break;
             }
                 
@@ -176,107 +186,107 @@ typedef enum {
                 }
                 
                 // Record new song position
-                _savedSongPosition = ((unsigned short)packet->data[2] << 7) | (unsigned short)packet->data[1];
+                THIS->_savedSongPosition = ((unsigned short)packet->data[2] << 7) | (unsigned short)packet->data[1];
                 
-                if ( _timeBase ) {
+                if ( THIS->_timeBase ) {
                     // Currently running; prepare to do a live seek
-                    _primedAction = SEMIDIClockReceiverActionSeek;
+                    THIS->_primedAction = SEActionSeek;
                 }
                 break;
             }
                 
             case SEMIDIMessageClock: {
                 
-                uint64_t previousTick = _lastTick;
-                _lastTick = timestamp;
-                _lastTickReceiveTime = SECurrentTimeInHostTicks();
+                uint64_t previousTick = THIS->_lastTick;
+                THIS->_lastTick = timestamp;
+                THIS->_lastTickReceiveTime = SECurrentTimeInHostTicks();
                 
                 if ( !previousTick ) {
                     // No prior tick - don't do anything until the next one
-                    if ( _primedAction ) {
+                    if ( THIS->_primedAction ) {
                         // Remember the timestamp for a pending action
-                        _primedActionTimestamp = timestamp;
+                        THIS->_primedActionTimestamp = timestamp;
                     }
                     break;
                 }
                 
                 // Process any primed actions
-                switch ( _primedAction ) {
-                    case SEMIDIClockReceiverActionStart:
-                    case SEMIDIClockReceiverActionContinue: {
-                        if ( _primedAction == SEMIDIClockReceiverActionStart ) {
+                switch ( THIS->_primedAction ) {
+                    case SEActionStart:
+                    case SEActionContinue: {
+                        if ( THIS->_primedAction == SEActionStart ) {
                             // Start from beginning of timeline
-                            _savedSongPosition = 0;
-                            _tickCount = 0;
+                            THIS->_savedSongPosition = 0;
+                            THIS->_tickCount = 0;
                         } else {
                             // Continue from set song position
-                            _tickCount = _savedSongPosition * SEMIDITicksPerSongPositionBeat;
+                            THIS->_tickCount = THIS->_savedSongPosition * SEMIDITicksPerSongPositionBeat;
                         }
-                        _clockRunning = YES;
-                        SEMIDIClockReceiverSampleBufferClear(&_timeBaseSampleBuffer);
+                        THIS->_clockRunning = YES;
+                        SESampleBufferClear(&THIS->_timeBaseSampleBuffer);
                         break;
                     }
-                    case SEMIDIClockReceiverActionSeek: {
+                    case SEActionSeek: {
                         // Continue from set song position
-                        _tickCount = _savedSongPosition * SEMIDITicksPerSongPositionBeat;
-                        SEMIDIClockReceiverSampleBufferClear(&_timeBaseSampleBuffer);
+                        THIS->_tickCount = THIS->_savedSongPosition * SEMIDITicksPerSongPositionBeat;
+                        SESampleBufferClear(&THIS->_timeBaseSampleBuffer);
                         break;
                     }
-                    case SEMIDIClockReceiverActionNone: {
-                        if ( _clockRunning ) {
+                    case SEActionNone: {
+                        if ( THIS->_clockRunning ) {
                             // No pending action; count ticks, in order to get timeline position
-                            _tickCount++;
+                            THIS->_tickCount++;
                             
                             // Remember last playback position
-                            _savedSongPosition = _tickCount / SEMIDITicksPerSongPositionBeat;
+                            THIS->_savedSongPosition = THIS->_tickCount / SEMIDITicksPerSongPositionBeat;
                         }
                         break;
                     }
                 }
                 
-                if ( _primedActionTimestamp ) {
+                if ( THIS->_primedActionTimestamp ) {
                     // There's a prior tick we need to count
-                    _tickCount++;
+                    THIS->_tickCount++;
                 }
                 
                 // Determine interval since last tick, and calculate corresponding tempo
                 uint64_t interval = timestamp - previousTick;
                 
                 // Add to collected samples
-                SEMIDIClockReceiverSampleBufferIntegrateSample(&_tickSampleBuffer, interval);
-                int samplesSinceChange = SEMIDIClockReceiverSampleBufferSamplesSinceLastSignificantChange(&_tickSampleBuffer);
+                SESampleBufferIntegrateSample(&THIS->_tickSampleBuffer, interval);
+                int samplesSinceChange = SESampleBufferSamplesSinceLastSignificantChange(&THIS->_tickSampleBuffer);
                 
                 // Determine source's relative standard deviation
-                double relativeStandardDeviation = ((double)SEMIDIClockReceiverSampleBufferStandardDeviation(&_tickSampleBuffer) / (double)interval) * 100.0;
-                _error = relativeStandardDeviation;
+                double relativeStandardDeviation = ((double)SESampleBufferStandardDeviation(&THIS->_tickSampleBuffer) / (double)interval) * 100.0;
+                THIS->_error = relativeStandardDeviation;
                 
                 // Calculate true interval from samples, and convert to tempo
-                interval = SEMIDIClockReceiverSampleBufferCalculatedValue(&_tickSampleBuffer);
+                interval = SESampleBufferCalculatedValue(&THIS->_tickSampleBuffer);
                 double tempo = (double)SESecondsToHostTicks(60.0) / (double)(interval * SEMIDITicksPerBeat);
                 
                 // Update tempo history
-                if ( SEMIDIClockReceiverSampleBufferSignificantChangeHappened(&_tickSampleBuffer) ) {
+                if ( SESampleBufferSignificantChangeHappened(&THIS->_tickSampleBuffer) ) {
                     // We just saw a significant change - clear the tempo history
-                    for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
+                    for ( int i=0; i<kTempoHistoryLength; i++ ) { THIS->_tempoHistory[i].max = 0.0; THIS->_tempoHistory[i].min = DBL_MAX; }
                     
                 } else if ( samplesSinceChange >= kMinSamplesBeforeRecordingTempoHistory ) {
                     // Add to history
                     uint64_t tempoHistoryBucketDuration = SESecondsToHostTicks(1.0);
                     int tempoHistoryBucket = (timestamp / tempoHistoryBucketDuration) % kTempoHistoryLength;
-                    if ( tempoHistoryBucket != _lastTempoHistoryBucket ) {
+                    if ( tempoHistoryBucket != THIS->_lastTempoHistoryBucket ) {
                         // Clear this old bucket
-                        _tempoHistory[tempoHistoryBucket].max = 0.0;
-                        _tempoHistory[tempoHistoryBucket].min = DBL_MAX;
-                        _lastTempoHistoryBucket = tempoHistoryBucket;
+                        THIS->_tempoHistory[tempoHistoryBucket].max = 0.0;
+                        THIS->_tempoHistory[tempoHistoryBucket].min = DBL_MAX;
+                        THIS->_lastTempoHistoryBucket = tempoHistoryBucket;
                     }
-                    _tempoHistory[tempoHistoryBucket].max = MAX(tempo, _tempoHistory[tempoHistoryBucket].max);
-                    _tempoHistory[tempoHistoryBucket].min = MIN(tempo, _tempoHistory[tempoHistoryBucket].min);
+                    THIS->_tempoHistory[tempoHistoryBucket].max = MAX(tempo, THIS->_tempoHistory[tempoHistoryBucket].max);
+                    THIS->_tempoHistory[tempoHistoryBucket].min = MIN(tempo, THIS->_tempoHistory[tempoHistoryBucket].min);
                 }
                 
                 // Determine how much rounding to perform on tempo, to achieve a stable value
                 int roundingCoefficient = 5;
                 if ( relativeStandardDeviation <= kTrustedStandardDeviation
-                        && SEMIDIClockReceiverSampleBufferSamplesSeen(&_tickSampleBuffer) > kMinSamplesBeforeTrustingZeroStdDev ) {
+                        && SESampleBufferSamplesSeen(&THIS->_tickSampleBuffer) > kMinSamplesBeforeTrustingZeroStdDev ) {
                     
                     // We trust this source - just round to avoid minor floating-point errors
                     roundingCoefficient = 0;
@@ -292,16 +302,16 @@ typedef enum {
                             BOOL acceptableRounding = YES;
                             double comparisonValue = 0.0;
                             for ( int i=0; i<kTempoHistoryLength; i++ ) {
-                                if ( _tempoHistory[i].max == 0.0 ) continue;
+                                if ( THIS->_tempoHistory[i].max == 0.0 ) continue;
                                 
                                 if ( comparisonValue == 0.0 ) {
                                     // Use the first value we come to for comparison
-                                    comparisonValue = round(_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                                    comparisonValue = round(THIS->_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
                                 }
                                 
                                 // Compare the value bounds for this entry against our comparison value
-                                double roundedMaxValue = round(_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
-                                double roundedMinValue = round(_tempoHistory[i].min / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                                double roundedMaxValue = round(THIS->_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                                double roundedMinValue = round(THIS->_tempoHistory[i].min / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
                                 
                                 if ( fabs(roundedMaxValue - comparisonValue) > 1.0e-5 || fabs(roundedMinValue - comparisonValue) > 1.0e-5 ) {
                                     // This rounding coefficient doesn't give us a stable result - move on
@@ -321,92 +331,60 @@ typedef enum {
                 // Apply rounding
                 tempo = round(tempo / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
                 
-                _sampleCountSinceLastTempoUpdate++;
+                THIS->_sampleCountSinceLastTempoUpdate++;
                 
-                if ( !_receivingTempo || !_tempo || (fabs(_tempo - tempo) >= kTempoChangeUpdateThreshold) ) {
+                if ( !THIS->_tempo || (fabs(THIS->_tempo - tempo) >= kTempoChangeUpdateThreshold) ) {
                     // A significant tempo change happened. Report it (with rate limiting)
                     BOOL reportUpdate = NO;
                     
                     if ( relativeStandardDeviation <= kTrustedStandardDeviation
-                            && SEMIDIClockReceiverSampleBufferSamplesSeen(&_tickSampleBuffer) > kMinSamplesBeforeTrustingZeroStdDev ) {
+                            && SESampleBufferSamplesSeen(&THIS->_tickSampleBuffer) > kMinSamplesBeforeTrustingZeroStdDev ) {
                         // Trust the source - it's very accurate - so report any change immediately
                         reportUpdate = YES;
                         
-                    } else if ( (!_tempo && _clockRunning) || samplesSinceChange == kMinSamplesBeforeReportingTempo ) {
+                    } else if ( (!THIS->_tempo && THIS->_clockRunning) || samplesSinceChange == kMinSamplesBeforeReportingTempo ) {
                         // Report when tempo is needed but absent, or shortly after we've seen a significant change
                         reportUpdate = YES;
                         
-                    } else if ( _sampleCountSinceLastTempoUpdate > kMinSamplesBetweenTempoUpdates && samplesSinceChange >= kMinSamplesBeforeReportingTempo ) {
+                    } else if ( THIS->_sampleCountSinceLastTempoUpdate > kMinSamplesBetweenTempoUpdates && samplesSinceChange >= kMinSamplesBeforeReportingTempo ) {
                         // Report every so often
                         reportUpdate = YES;
                     }
                     
                     if ( reportUpdate ) {
                         #ifdef DEBUG_LOGGING
-                        NSLog(@"Tempo is now %lf (was %lf)", tempo, _tempo);
+                        NSLog(@"Tempo is now %lf (was %lf)", tempo, THIS->_tempo);
                         #endif
                         
-                        _tempo = tempo;
-                        _sampleCountSinceLastTempoUpdate = 0;
-                        BOOL firstSample = !_receivingTempo;
-                        _receivingTempo = YES;
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            if ( firstSample ) {
-                                [self willChangeValueForKey:@"receivingTempo"];
-                                [self didChangeValueForKey:@"receivingTempo"];
-                                [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStartTempoSyncNotification
-                                                                                    object:self
-                                                                                  userInfo:@{ SEMIDIClockReceiverTempoKey: @(tempo),
-                                                                                              SEMIDIClockReceiverTimestampKey: @(timestamp) }];
-                            }
-                            [self willChangeValueForKey:@"tempo"];
-                            [self didChangeValueForKey:@"tempo"];
-                            [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidChangeTempoNotification
-                                                                                object:self
-                                                                              userInfo:@{ SEMIDIClockReceiverTempoKey: @(tempo),
-                                                                                          SEMIDIClockReceiverTimestampKey: @(timestamp) }];
-                        });
+                        THIS->_tempo = tempo;
+                        THIS->_sampleCountSinceLastTempoUpdate = 0;
+                        
+                        SEMIDIClockReceiverPushEvent(THIS, SEEventTypeTempo, timestamp);
                     }
                 }
                 
-                if ( _clockRunning && _tempo ) {
+                if ( THIS->_clockRunning && THIS->_tempo ) {
                     // Calculate new timebase
-                    uint64_t timeBase = timestamp - SEBeatsToHostTicks((double)_tickCount / (double)SEMIDITicksPerBeat, _tempo);
+                    uint64_t timeBase = timestamp - SEBeatsToHostTicks((double)THIS->_tickCount / (double)SEMIDITicksPerBeat, THIS->_tempo);
                     
                     // Add to collected samples
-                    SEMIDIClockReceiverSampleBufferIntegrateSample(&_timeBaseSampleBuffer, timeBase);
+                    SESampleBufferIntegrateSample(&THIS->_timeBaseSampleBuffer, timeBase);
                     
                     // Calculate true time base from samples
-                    _timeBase = SEMIDIClockReceiverSampleBufferCalculatedValue(&_timeBaseSampleBuffer);
+                    THIS->_timeBase = SESampleBufferCalculatedValue(&THIS->_timeBaseSampleBuffer);
                 }
                 
-                if ( _primedAction ) {
+                if ( THIS->_primedAction ) {
                     // Finalise primed actions
-                    uint64_t actionTimestamp = _primedActionTimestamp ? _primedActionTimestamp : timestamp;
-                    switch ( _primedAction ) {
-                        case SEMIDIClockReceiverActionStart:
-                        case SEMIDIClockReceiverActionContinue: {
-                            
-                            // Perform notifications
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                [self willChangeValueForKey:@"clockRunning"];
-                                [self didChangeValueForKey:@"clockRunning"];
-                                
-                                [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStartNotification
-                                                                                    object:self
-                                                                                  userInfo:@{ SEMIDIClockReceiverTimestampKey: @(actionTimestamp) }];
-                            });
+                    uint64_t actionTimestamp = THIS->_primedActionTimestamp ? THIS->_primedActionTimestamp : timestamp;
+                    switch ( THIS->_primedAction ) {
+                        case SEActionStart:
+                        case SEActionContinue: {
+                            SEMIDIClockReceiverPushEvent(THIS, SEEventTypeStart, actionTimestamp);
                             break;
                         }
-                        case SEMIDIClockReceiverActionSeek: {
-                            
-                            // Perform notifications
-                            dispatch_async(dispatch_get_main_queue(), ^{
-                                [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidLiveSeekNotification
-                                                                                    object:self
-                                                                                  userInfo:@{ SEMIDIClockReceiverTimestampKey: @(actionTimestamp) }];
-                            });
-                            
+                        case SEActionSeek: {
+                            SEMIDIClockReceiverPushEvent(THIS, SEEventTypeSeek, actionTimestamp);
                             break;
                         }
                         default: {
@@ -414,21 +392,8 @@ typedef enum {
                         }
                     }
                     
-                    _primedAction = SEMIDIClockReceiverActionNone;
-                    _primedActionTimestamp = 0;
-                }
-                
-                if ( !_timeout ) {
-                    // Start timeout, used to report when we stop getting ticks
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        if ( !_timeout ) {
-                            self.timeout = [NSTimer scheduledTimerWithTimeInterval:0.5
-                                                                            target:[[SEWeakRetainingProxy alloc] initWithTarget:self]
-                                                                          selector:@selector(checkTimeout:)
-                                                                          userInfo:nil
-                                                                           repeats:YES];
-                        }
-                    });
+                    THIS->_primedAction = SEActionNone;
+                    THIS->_primedActionTimestamp = 0;
                 }
                 
                 break;
@@ -445,8 +410,8 @@ typedef enum {
     _receivingTempo = NO;
     _savedSongPosition = 0;
     _sampleCountSinceLastTempoUpdate = 0;
-    SEMIDIClockReceiverSampleBufferClear(&_tickSampleBuffer);
-    SEMIDIClockReceiverSampleBufferClear(&_timeBaseSampleBuffer);
+    SESampleBufferClear(&_tickSampleBuffer);
+    SESampleBufferClear(&_timeBaseSampleBuffer);
     for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
     [self didChangeValueForKey:@"receivingTempo"];
     
@@ -508,12 +473,100 @@ double SEMIDIClockReceiverGetTempo(__unsafe_unretained SEMIDIClockReceiver * rec
     return SEMIDIClockReceiverIsClockRunning(self);
 }
 
--(void)checkTimeout:(NSTimer*)timer {
+
+static void SEMIDIClockReceiverPushEvent(__unsafe_unretained SEMIDIClockReceiver * THIS, SEEventType type, uint64_t timestamp) {
+    for ( int i=0; i<kEventBufferSize; i++ ) {
+        if ( THIS->_eventBuffer[i].type == SEEventTypeNone ) {
+            THIS->_eventBuffer[i].timestamp = timestamp;
+            OSMemoryBarrier();
+            THIS->_eventBuffer[i].type = type;
+            break;
+        }
+    }
+}
+
+-(void)pollForEvents {
+    for ( int i=0; i<kEventBufferSize; i++ ) {
+        if ( _eventBuffer[i].type == SEEventTypeNone ) {
+            continue;
+        }
+        
+        switch ( _eventBuffer[i].type ) {
+            case SEEventTypeStop:
+                if ( fabs(_eventPollTimer.timeInterval - kIdlePollInterval) > DBL_EPSILON ) {
+                    [_eventPollTimer invalidate];
+                    self.eventPollTimer = [NSTimer scheduledTimerWithTimeInterval:kIdlePollInterval
+                                                                           target:[[SEWeakRetainingProxy alloc] initWithTarget:self]
+                                                                         selector:@selector(pollForEvents)
+                                                                         userInfo:nil
+                                                                          repeats:YES];
+                }
+                [self willChangeValueForKey:@"clockRunning"];
+                [self didChangeValueForKey:@"clockRunning"];
+                [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStopNotification
+                                                                    object:self
+                                                                  userInfo:@{ SEMIDIClockReceiverTimestampKey: @(_eventBuffer[i].timestamp) }];
+                break;
+            case SEEventTypeTempo:
+                if ( !_receivingTempo ) {
+                    if ( fabs(_eventPollTimer.timeInterval - kActivePollInterval) > DBL_EPSILON ) {
+                        [_eventPollTimer invalidate];
+                        self.eventPollTimer = [NSTimer scheduledTimerWithTimeInterval:kActivePollInterval
+                                                                               target:[[SEWeakRetainingProxy alloc] initWithTarget:self]
+                                                                             selector:@selector(pollForEvents)
+                                                                             userInfo:nil
+                                                                              repeats:YES];
+                    }
+                    
+                    [self willChangeValueForKey:@"receivingTempo"];
+                    _receivingTempo = YES;
+                    [self didChangeValueForKey:@"receivingTempo"];
+                    [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStartTempoSyncNotification
+                                                                        object:self
+                                                                      userInfo:@{ SEMIDIClockReceiverTempoKey: @(_tempo),
+                                                                                  SEMIDIClockReceiverTimestampKey: @(_eventBuffer[i].timestamp) }];
+                }
+                [self willChangeValueForKey:@"tempo"];
+                [self didChangeValueForKey:@"tempo"];
+                [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidChangeTempoNotification
+                                                                    object:self
+                                                                  userInfo:@{ SEMIDIClockReceiverTempoKey: @(_tempo),
+                                                                              SEMIDIClockReceiverTimestampKey: @(_eventBuffer[i].timestamp) }];
+                break;
+                
+            case SEEventTypeStart:
+                [self willChangeValueForKey:@"clockRunning"];
+                [self didChangeValueForKey:@"clockRunning"];
+                
+                [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStartNotification
+                                                                    object:self
+                                                                  userInfo:@{ SEMIDIClockReceiverTimestampKey: @(_eventBuffer[i].timestamp) }];
+                break;
+                
+            case SEEventTypeSeek:
+                [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidLiveSeekNotification
+                                                                    object:self
+                                                                  userInfo:@{ SEMIDIClockReceiverTimestampKey: @(_eventBuffer[i].timestamp) }];
+                break;
+                
+            default:
+                break;
+        }
+        
+        _eventBuffer[i].type = SEEventTypeNone;
+    }
+    
     if ( _lastTickReceiveTime && _lastTickReceiveTime < SECurrentTimeInHostTicks() - SESecondsToHostTicks(0.5) ) {
         
         // Timed out
-        [_timeout invalidate];
-        self.timeout = nil;
+        if ( fabs(_eventPollTimer.timeInterval - kIdlePollInterval) > DBL_EPSILON ) {
+            [_eventPollTimer invalidate];
+            self.eventPollTimer = [NSTimer scheduledTimerWithTimeInterval:kIdlePollInterval
+                                                                   target:[[SEWeakRetainingProxy alloc] initWithTarget:self]
+                                                                 selector:@selector(pollForEvents)
+                                                                 userInfo:nil
+                                                                  repeats:YES];
+        }
         
         [self willChangeValueForKey:@"receivingTempo"];
         _tickCount = 0;
@@ -521,8 +574,8 @@ double SEMIDIClockReceiverGetTempo(__unsafe_unretained SEMIDIClockReceiver * rec
         _lastTickReceiveTime = 0;
         _receivingTempo = NO;
         _sampleCountSinceLastTempoUpdate = 0;
-        SEMIDIClockReceiverSampleBufferClear(&_tickSampleBuffer);
-        SEMIDIClockReceiverSampleBufferClear(&_timeBaseSampleBuffer);
+        SESampleBufferClear(&_tickSampleBuffer);
+        SESampleBufferClear(&_timeBaseSampleBuffer);
         for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
         [self didChangeValueForKey:@"receivingTempo"];
         
@@ -545,14 +598,14 @@ double SEMIDIClockReceiverGetTempo(__unsafe_unretained SEMIDIClockReceiver * rec
 
 #pragma mark - Ring buffer utilities
 
-static void SEMIDIClockReceiverSampleBufferIntegrateSample(SEMIDIClockReceiverSampleBuffer *buffer, uint64_t sample) {
+static void SESampleBufferIntegrateSample(SESampleBuffer *buffer, uint64_t sample) {
     
     // First determine if sample is an outlier. We identify outliers for two purposes: to allow for adjustments in
     // timeline position independent of tempo change (which necessitate one tick with a correction interval that appears
     // as an outlier), and to identify consecutive outliers which represent a new value, so we can converge faster upon that.
     
     BOOL outlier = NO;
-    if ( SEMIDIClockReceiverSampleBufferFillCount(buffer) < kMinSamplesBeforeEvaluatingOutliers ) {
+    if ( SESampleBufferFillCount(buffer) < kMinSamplesBeforeEvaluatingOutliers ) {
         
         // Not enough samples seen yet
         outlier = NO;
@@ -578,7 +631,7 @@ static void SEMIDIClockReceiverSampleBufferIntegrateSample(SEMIDIClockReceiverSa
                     // adjustment.
                     outlier = NO;
                     for ( int i=0; i<buffer->outlierCount; i++ ) {
-                        _SEMIDIClockReceiverSampleBufferAddSampleToBuffer(buffer, buffer->outliers[i]);
+                        _SESampleBufferAddSampleToBuffer(buffer, buffer->outliers[i]);
                     }
                     buffer->outlierCount = 0;
                 }
@@ -600,7 +653,7 @@ static void SEMIDIClockReceiverSampleBufferIntegrateSample(SEMIDIClockReceiverSa
             
             // Add the outliers
             for ( int i=0; i<buffer->outlierCount; i++ ) {
-                _SEMIDIClockReceiverSampleBufferAddSampleToBuffer(buffer, buffer->outliers[i]);
+                _SESampleBufferAddSampleToBuffer(buffer, buffer->outliers[i]);
             }
             
             buffer->outlierCount = 0;
@@ -609,7 +662,7 @@ static void SEMIDIClockReceiverSampleBufferIntegrateSample(SEMIDIClockReceiverSa
         }
     } else {
         // Not an outlier: integrate this sample
-        _SEMIDIClockReceiverSampleBufferAddSampleToBuffer(buffer, sample);
+        _SESampleBufferAddSampleToBuffer(buffer, sample);
         
         if ( buffer->outlierCount != 0 ) {
             // Ignore any outliers we saw
@@ -645,11 +698,11 @@ static void SEMIDIClockReceiverSampleBufferIntegrateSample(SEMIDIClockReceiverSa
 
 }
 
-static uint64_t SEMIDIClockReceiverSampleBufferCalculatedValue(SEMIDIClockReceiverSampleBuffer *buffer) {
+static uint64_t SESampleBufferCalculatedValue(SESampleBuffer *buffer) {
     return buffer->mean;
 }
 
-static uint64_t SEMIDIClockReceiverSampleBufferStandardDeviation(SEMIDIClockReceiverSampleBuffer *buffer) {
+static uint64_t SESampleBufferStandardDeviation(SESampleBuffer *buffer) {
     if ( buffer->seenSamples <= kMinSamplesBeforeStoringStandardDeviation ) {
         return buffer->standardDeviation;
     }
@@ -660,31 +713,31 @@ static uint64_t SEMIDIClockReceiverSampleBufferStandardDeviation(SEMIDIClockRece
     return max;
 }
 
-static int SEMIDIClockReceiverSampleBufferSamplesSeen(SEMIDIClockReceiverSampleBuffer *buffer) {
+static int SESampleBufferSamplesSeen(SESampleBuffer *buffer) {
     return buffer->seenSamples;
 }
 
-static int SEMIDIClockReceiverSampleBufferSamplesSinceLastSignificantChange(SEMIDIClockReceiverSampleBuffer *buffer) {
+static int SESampleBufferSamplesSinceLastSignificantChange(SESampleBuffer *buffer) {
     return buffer->sampleCountSinceLastSignificantChange;
 }
 
-static BOOL SEMIDIClockReceiverSampleBufferSignificantChangeHappened(SEMIDIClockReceiverSampleBuffer *buffer) {
+static BOOL SESampleBufferSignificantChangeHappened(SESampleBuffer *buffer) {
     BOOL significantChange = buffer->significantChange;
     buffer->significantChange = NO;
     return significantChange;
 }
 
-static void SEMIDIClockReceiverSampleBufferClear(SEMIDIClockReceiverSampleBuffer *buffer) {
-    memset(buffer, 0, sizeof(SEMIDIClockReceiverSampleBuffer));
+static void SESampleBufferClear(SESampleBuffer *buffer) {
+    memset(buffer, 0, sizeof(SESampleBuffer));
 }
 
-static int SEMIDIClockReceiverSampleBufferFillCount(SEMIDIClockReceiverSampleBuffer *buffer) {
+static int SESampleBufferFillCount(SESampleBuffer *buffer) {
     return buffer->head >= buffer->tail
         ? buffer->head - buffer->tail
         : (buffer->head + kSampleBufferSize) - buffer->tail;
 }
 
-static void _SEMIDIClockReceiverSampleBufferAddSampleToBuffer(SEMIDIClockReceiverSampleBuffer *buffer, uint64_t sample) {
+static void _SESampleBufferAddSampleToBuffer(SESampleBuffer *buffer, uint64_t sample) {
     if ( (buffer->head + 1) % kSampleBufferSize == buffer->tail ) {
         // Buffer is full, slide along: factor out last sample
         buffer->accumulator -= buffer->samples[buffer->tail];
@@ -703,7 +756,7 @@ static void _SEMIDIClockReceiverSampleBufferAddSampleToBuffer(SEMIDIClockReceive
     buffer->accumulator += sample;
     
     // Calculate new mean
-    buffer->mean = buffer->accumulator / SEMIDIClockReceiverSampleBufferFillCount(buffer);
+    buffer->mean = buffer->accumulator / SESampleBufferFillCount(buffer);
     
     // Calculate new standard deviation
     uint64_t sum = 0;
@@ -711,7 +764,7 @@ static void _SEMIDIClockReceiverSampleBufferAddSampleToBuffer(SEMIDIClockReceive
         uint64_t absDifference = buffer->samples[i] > buffer->mean ? buffer->samples[i] - buffer->mean : buffer->mean - buffer->samples[i];
         sum += absDifference*absDifference;
     }
-    buffer->standardDeviation = sqrt((double)sum / (double)SEMIDIClockReceiverSampleBufferFillCount(buffer));
+    buffer->standardDeviation = sqrt((double)sum / (double)SESampleBufferFillCount(buffer));
     
     if ( buffer->sampleCountSinceLastSignificantChange > kMinSamplesBeforeStoringStandardDeviation ) {
         int standardDeviationHistoryBucket = (buffer->sampleCountSinceLastSignificantChange / kStandardDeviationHistoryEntryDuration) % kStandardDeviationHistorySamples;

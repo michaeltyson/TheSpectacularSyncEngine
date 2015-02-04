@@ -27,8 +27,8 @@ extern "C" {
  *  If you have your own Core MIDI implementation already, use the
  *  initWithOutputPort:virtualSource: initialiser, which will stop this class
  *  creating its own port and endpoint, and allow it to use your existing ones. Then
- *  forward incoming MIDI messages to this class using the receivePacketList:fromEndpoint:
- *  method. Note that assigning a value to the source property will cause this
+ *  forward incoming MIDI messages to this class using the SEMIDIClockReceiverCoreMIDIInterfaceReceive
+ *  function. Note that assigning a value to the source property will cause this
  *  class to automatically connect the source endpoint, using MIDIPortConnectSource,
  *  and disconnect any previously assigned sources using MIDIPortDisconnectSource.
  *
@@ -71,17 +71,18 @@ extern "C" {
  *
  *  If you are using this class with your own implementation, and have
  *  thus initialised it with initWithReceiver:inputPort:virtualDestination:,
- *  then you must use this method to forward incoming MIDI messages to this
+ *  then you must use this function to forward incoming MIDI messages to this
  *  class. Pass the incoming packet list, as well as the originating
  *  MIDI endpoint (or zero to indicate the virtual MIDI destination).
  *
  *  Do not use this method if you initialised this class with the
  *  default initWithReceiver: initialiser.
  *
+ * @param interface The interface instance
  * @param packetList The incoming MIDI packet list
  * @param endpoint The originating MIDI endpoint
  */
--(void)receivePacketList:(const MIDIPacketList *)packetList fromEndpoint:(MIDIEndpointRef)endpoint;
+void SEMIDIClockReceiverCoreMIDIInterfaceReceive(__unsafe_unretained SEMIDIClockReceiverCoreMIDIInterface * interface, const MIDIPacketList * packetList, MIDIEndpointRef endpoint);
 
 /*!
  * The SEMIDIClockReceiver instance

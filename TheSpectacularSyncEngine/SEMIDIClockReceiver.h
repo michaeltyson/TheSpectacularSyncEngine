@@ -32,7 +32,7 @@ extern NSString * const SEMIDIClockReceiverTempoKey;                   ///< Noti
  *  changes.
  *
  *  To use it, initialise it, and then pass MIDI messages to it via the
- *  receivePacketList: method, or use the provided categories to work with other
+ *  SEMIDIReceiverReceivePacketList function, or use the provided categories to work with other
  *  libraries.
  *
  *  Then, watch or poll for changes, either via the provided notifications or
@@ -59,9 +59,10 @@ extern NSString * const SEMIDIClockReceiverTempoKey;                   ///< Noti
  *  too much time on the thread that handles incoming MIDI signals, or you risk
  *  destabilizing the incoming signal.
  *
+ * @param receiver The receiver
  * @param packetList The incoming MIDI packet list
  */
--(void)receivePacketList:(const MIDIPacketList *)packetList;
+void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceiver * receiver, const MIDIPacketList * packetList);
 
 /*!
  * Reset

@@ -160,8 +160,8 @@ static void * kNetworkContactsChanged = &kNetworkContactsChanged;
     }
 }
 
--(void)receivePacketList:(const MIDIPacketList *)packetList fromEndpoint:(MIDIEndpointRef)endpoint {
-    midiRead(packetList, (__bridge void*)self, (void*)(intptr_t)endpoint);
+void SEMIDIClockReceiverCoreMIDIInterfaceReceive(__unsafe_unretained SEMIDIClockReceiverCoreMIDIInterface * THIS, const MIDIPacketList * packetList, MIDIEndpointRef endpoint) {
+    midiRead(packetList, (__bridge void*)THIS, (void*)(intptr_t)endpoint);
 }
 
 static void midiNotify(const MIDINotification * message, void * inRefCon) {
@@ -190,7 +190,7 @@ static void midiNotify(const MIDINotification * message, void * inRefCon) {
 }
 
 static void midiRead(const MIDIPacketList * pktlist, void * readProcRefCon, void * srcConnRefCon) {
-    SEMIDIClockReceiverCoreMIDIInterface * THIS = (__bridge SEMIDIClockReceiverCoreMIDIInterface*)readProcRefCon;
+    __unsafe_unretained SEMIDIClockReceiverCoreMIDIInterface * THIS = (__bridge SEMIDIClockReceiverCoreMIDIInterface*)readProcRefCon;
     if ( !THIS->_source ) {
         return;
     }
@@ -202,7 +202,7 @@ static void midiRead(const MIDIPacketList * pktlist, void * readProcRefCon, void
         return;
     }
     
-    [THIS->_receiver receivePacketList:pktlist];
+    SEMIDIClockReceiverReceivePacketList(THIS->_receiver, pktlist);
 }
 
 - (NSString*)virtualEndpointName {

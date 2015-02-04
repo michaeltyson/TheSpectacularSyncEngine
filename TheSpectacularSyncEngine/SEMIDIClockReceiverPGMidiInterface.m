@@ -38,7 +38,7 @@
 }
 
 -(void)midiSource:(PGMidiSource *)input midiReceived:(const MIDIPacketList *)packetList {
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
 }
 
 @end

@@ -180,6 +180,6 @@
 
 @implementation SEMIDIClockSenderPassthroughInterface
 -(void)sendMIDIPacketList:(const MIDIPacketList *)packetList {
-    [_receiver receivePacketList:packetList];
+    SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
 }
 @end
