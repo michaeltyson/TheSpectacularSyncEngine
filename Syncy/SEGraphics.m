@@ -106,6 +106,89 @@ static PCGradient* _backgroundGradient = nil;
     [trianglePath stroke];
 }
 
++ (void)drawForwardWithFrame: (CGRect)frame
+{
+
+    //// Oval-2 Drawing
+    UIBezierPath* oval2Path = [UIBezierPath bezierPathWithOvalInRect: CGRectMake(CGRectGetMinX(frame) + 1, CGRectGetMinY(frame) + 1, CGRectGetWidth(frame) - 2, CGRectGetHeight(frame) - 2)];
+    [SEGraphics.activeColor setStroke];
+    oval2Path.lineWidth = 2;
+    [oval2Path stroke];
+
+
+    //// Triangle-1 Drawing
+    UIBezierPath* triangle1Path = UIBezierPath.bezierPath;
+    [triangle1Path moveToPoint: CGPointMake(CGRectGetMinX(frame) + 0.30769 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.65385 * CGRectGetHeight(frame))];
+    [triangle1Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.30769 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.34615 * CGRectGetHeight(frame))];
+    [triangle1Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.51923 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.50000 * CGRectGetHeight(frame))];
+    [triangle1Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.30769 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.65385 * CGRectGetHeight(frame))];
+    [triangle1Path closePath];
+    triangle1Path.miterLimit = 4;
+
+    triangle1Path.usesEvenOddFillRule = YES;
+
+    [SEGraphics.activeColor setStroke];
+    triangle1Path.lineWidth = 2;
+    [triangle1Path stroke];
+
+
+    //// Triangle-2 Drawing
+    UIBezierPath* triangle2Path = UIBezierPath.bezierPath;
+    [triangle2Path moveToPoint: CGPointMake(CGRectGetMinX(frame) + 0.55769 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.65385 * CGRectGetHeight(frame))];
+    [triangle2Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.55769 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.34615 * CGRectGetHeight(frame))];
+    [triangle2Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.76923 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.50000 * CGRectGetHeight(frame))];
+    [triangle2Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.55769 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.65385 * CGRectGetHeight(frame))];
+    [triangle2Path closePath];
+    triangle2Path.miterLimit = 4;
+
+    triangle2Path.usesEvenOddFillRule = YES;
+
+    [SEGraphics.activeColor setStroke];
+    triangle2Path.lineWidth = 2;
+    [triangle2Path stroke];
+}
+
++ (void)drawBackWithFrame: (CGRect)frame
+{
+
+    //// Triangle-1 Drawing
+    UIBezierPath* triangle1Path = UIBezierPath.bezierPath;
+    [triangle1Path moveToPoint: CGPointMake(CGRectGetMinX(frame) + 0.69231 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.65385 * CGRectGetHeight(frame))];
+    [triangle1Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.69231 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.34615 * CGRectGetHeight(frame))];
+    [triangle1Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.48077 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.50000 * CGRectGetHeight(frame))];
+    [triangle1Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.69231 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.65385 * CGRectGetHeight(frame))];
+    [triangle1Path closePath];
+    triangle1Path.miterLimit = 4;
+
+    triangle1Path.usesEvenOddFillRule = YES;
+
+    [SEGraphics.activeColor setStroke];
+    triangle1Path.lineWidth = 2;
+    [triangle1Path stroke];
+
+
+    //// Triangle-2 Drawing
+    UIBezierPath* triangle2Path = UIBezierPath.bezierPath;
+    [triangle2Path moveToPoint: CGPointMake(CGRectGetMinX(frame) + 0.44231 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.65385 * CGRectGetHeight(frame))];
+    [triangle2Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.44231 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.34615 * CGRectGetHeight(frame))];
+    [triangle2Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.23077 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.50000 * CGRectGetHeight(frame))];
+    [triangle2Path addLineToPoint: CGPointMake(CGRectGetMinX(frame) + 0.44231 * CGRectGetWidth(frame), CGRectGetMinY(frame) + 0.65385 * CGRectGetHeight(frame))];
+    [triangle2Path closePath];
+    triangle2Path.miterLimit = 4;
+
+    triangle2Path.usesEvenOddFillRule = YES;
+
+    [SEGraphics.activeColor setStroke];
+    triangle2Path.lineWidth = 2;
+    [triangle2Path stroke];
+
+
+    //// Oval- Drawing
+    UIBezierPath* ovalPath = [UIBezierPath bezierPathWithOvalInRect: CGRectMake(CGRectGetMinX(frame) + 1, CGRectGetMinY(frame) + 1, CGRectGetWidth(frame) - 2, CGRectGetHeight(frame) - 2)];
+    [SEGraphics.activeColor setStroke];
+    ovalPath.lineWidth = 2;
+    [ovalPath stroke];
+}
 
 @end
 

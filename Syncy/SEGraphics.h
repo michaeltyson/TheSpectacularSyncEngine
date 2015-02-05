@@ -27,6 +27,8 @@
 // Drawing Methods
 + (void)drawPauseWithFrame: (CGRect)frame;
 + (void)drawPlayWithFrame: (CGRect)frame;
++ (void)drawForwardWithFrame: (CGRect)frame;
++ (void)drawBackWithFrame: (CGRect)frame;
 
 @end
 

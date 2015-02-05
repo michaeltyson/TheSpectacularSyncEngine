@@ -35,6 +35,8 @@
 		4C4438D01A5407C800176535 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C4438CF1A5407C800176535 /* UIKit.framework */; };
 		4C4438D61A5407C800176535 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4C4438D41A5407C800176535 /* InfoPlist.strings */; };
 		4C4438D81A5407C800176535 /* SEMIDIClockSenderTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C4438D71A5407C800176535 /* SEMIDIClockSenderTests.m */; };
+		4C65DE0C1A8300C5008A2008 /* SEForwardButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C65DE0B1A8300C5008A2008 /* SEForwardButton.m */; };
+		4C65DE0F1A830140008A2008 /* SEBackButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C65DE0E1A830140008A2008 /* SEBackButton.m */; };
 		4C6CCF871A64A52F0015EC2F /* SEMIDINetworkMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C6CCF861A64A52F0015EC2F /* SEMIDINetworkMonitor.m */; };
 		4C6CCF881A64A52F0015EC2F /* SEMIDINetworkMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C6CCF861A64A52F0015EC2F /* SEMIDINetworkMonitor.m */; };
 		4C8D302F1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C8D302E1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m */; };
@@ -100,6 +102,10 @@
 		4C4438D51A5407C800176535 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4C4438D71A5407C800176535 /* SEMIDIClockSenderTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SEMIDIClockSenderTests.m; sourceTree = "<group>"; };
 		4C4438D91A5407C800176535 /* TheSpectacularSyncEngineTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "TheSpectacularSyncEngineTests-Prefix.pch"; sourceTree = "<group>"; };
+		4C65DE0A1A8300C5008A2008 /* SEForwardButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SEForwardButton.h; sourceTree = "<group>"; };
+		4C65DE0B1A8300C5008A2008 /* SEForwardButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEForwardButton.m; sourceTree = "<group>"; };
+		4C65DE0D1A830140008A2008 /* SEBackButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SEBackButton.h; sourceTree = "<group>"; };
+		4C65DE0E1A830140008A2008 /* SEBackButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEBackButton.m; sourceTree = "<group>"; };
 		4C6CCF851A64A52F0015EC2F /* SEMIDINetworkMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDINetworkMonitor.h; path = TheSpectacularSyncEngine/SEMIDINetworkMonitor.h; sourceTree = "<group>"; };
 		4C6CCF861A64A52F0015EC2F /* SEMIDINetworkMonitor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDINetworkMonitor.m; path = TheSpectacularSyncEngine/SEMIDINetworkMonitor.m; sourceTree = "<group>"; };
 		4C8D302E1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEMIDIClockReceiverTests.m; sourceTree = "<group>"; };
@@ -261,6 +267,10 @@
 				4CDED2FF1A5BC63B0091ABAB /* SEGraphics.m */,
 				4CD2FA5B1A5CCF1500070D06 /* SEPlayPauseButton.h */,
 				4CD2FA5C1A5CCF1500070D06 /* SEPlayPauseButton.m */,
+				4C65DE0A1A8300C5008A2008 /* SEForwardButton.h */,
+				4C65DE0B1A8300C5008A2008 /* SEForwardButton.m */,
+				4C65DE0D1A830140008A2008 /* SEBackButton.h */,
+				4C65DE0E1A830140008A2008 /* SEBackButton.m */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -325,7 +335,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				4C4438DB1A5407C800176535 /* PBXTargetDependency */,
 				4C2CC6B21A82FE610079C224 /* PBXTargetDependency */,
 			);
 			name = TheSpectacularSyncEngineTests;
@@ -409,10 +418,12 @@
 				4C04766F1A53E19900894457 /* SEAppDelegate.m in Sources */,
 				4C27A87C1A5F690800BE0518 /* SEMIDIClockReceiver.m in Sources */,
 				4CD2FA651A5D21EC00070D06 /* TPDismissSegue.m in Sources */,
+				4C65DE0C1A8300C5008A2008 /* SEForwardButton.m in Sources */,
 				4C0476911A53E1DC00894457 /* SEAudioEngine.m in Sources */,
 				4CD2FA601A5CDAFE00070D06 /* SEMetronome.m in Sources */,
 				4C04766C1A53E19900894457 /* main.m in Sources */,
 				4C27A88A1A5F690800BE0518 /* SEMIDISourcesTableViewController.m in Sources */,
+				4C65DE0F1A830140008A2008 /* SEBackButton.m in Sources */,
 				4CCC54831A64EA1500B2706D /* SEMIDIEndpoint.m in Sources */,
 				4C27A87A1A5F690800BE0518 /* SECommon.m in Sources */,
 				4C27A87E1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m in Sources */,

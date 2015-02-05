@@ -19,12 +19,16 @@
 -(IBAction)showSources:(id)sender;
 -(IBAction)showDestinations:(id)sender;
 -(IBAction)togglePlayPause:(id)sender;
+-(IBAction)forward:(id)sender;
+-(IBAction)backward:(id)sender;
 
 @property (weak, nonatomic) IBOutlet UIButton *playPauseButton;
 @property (weak, nonatomic) IBOutlet SETempoPulseView *tempoPulseView;
 @property (weak, nonatomic) IBOutlet UILabel *tempoLabel;
 @property (weak, nonatomic) IBOutlet UILabel *positionLabel;
 @property (weak, nonatomic) IBOutlet UILabel *stabilityLabel;
+@property (weak, nonatomic) IBOutlet UIButton *backButton;
+@property (weak, nonatomic) IBOutlet UIButton *forwardButton;
 
 @property (nonatomic) SEMetronome *metronome;
 @property (nonatomic) SEMIDIClockSender *sender;

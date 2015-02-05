@@ -38,6 +38,8 @@ static const double kTempoDragVelocity = 0.15;
     
     self.positionLabel.hidden = YES;
     self.stabilityLabel.hidden = YES;
+    self.forwardButton.hidden = YES;
+    self.backButton.hidden = YES;
     self.tempoLabel.text = [NSString stringWithFormat:@"%g BPM", _metronome.tempo];
     _tempoPulseView.metronome = _metronome;
     
@@ -56,12 +58,29 @@ static const double kTempoDragVelocity = 0.15;
         _sender.tempo = _metronome.tempo;
         uint64_t startTime = [_sender startAtTime:0];
         [_metronome startAtTime:startTime];
-        ((UIButton*)sender).selected = YES;
     } else {
         [_metronome stop];
         [_sender stop];
-        ((UIButton*)sender).selected = NO;
     }
+    
+    _playPauseButton.selected = _metronome.started;
+    _forwardButton.hidden = !_metronome.started || _receiver.clockRunning;
+    _backButton.hidden = !_metronome.started || _receiver.clockRunning;
+}
+
+-(IBAction)forward:(id)sender {
+    if ( !_metronome.started ) return;
+    double newPosition = floor([_metronome timelinePositionForTime:SECurrentTimeInHostTicks()] + 4.0);
+    uint64_t applyTime = [_sender setActiveTimelinePosition:newPosition atTime:0];
+    [_metronome setTimelinePosition:newPosition atTime:applyTime];
+}
+
+-(IBAction)backward:(id)sender {
+    if ( !_metronome.started ) return;
+    double newPosition = floor([_metronome timelinePositionForTime:SECurrentTimeInHostTicks()] - 4.0);
+    if ( newPosition < 0.0 ) newPosition = 0.0;
+    uint64_t applyTime = [_sender setActiveTimelinePosition:newPosition atTime:0];
+    [_metronome setTimelinePosition:newPosition atTime:applyTime];
 }
 
 -(void)tempoDrag:(UIPanGestureRecognizer*)recognizer {
@@ -183,6 +202,9 @@ static const double kTempoDragVelocity = 0.15;
     }
     
     _playPauseButton.selected = _metronome.started;
+    _forwardButton.hidden = !_metronome.started || _receiver.clockRunning;
+    _backButton.hidden = !_metronome.started || _receiver.clockRunning;
+
     
     if ( !_sender.started ) {
         [_sender startAtTime:[notification.userInfo[SENotificationTimestampKey] unsignedLongLongValue]];
@@ -201,6 +223,8 @@ static const double kTempoDragVelocity = 0.15;
     }
     
     _playPauseButton.selected = _metronome.started;
+    _forwardButton.hidden = !_metronome.started || _receiver.clockRunning;
+    _backButton.hidden = !_metronome.started || _receiver.clockRunning;
 }
 
 -(void)changedTempo:(NSNotification*)notification {
