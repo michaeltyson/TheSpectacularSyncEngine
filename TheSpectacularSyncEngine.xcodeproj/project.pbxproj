@@ -603,6 +603,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
+					"TEST_RIG_BUILD=1",
 				);
 				INFOPLIST_FILE = "Tests/TheSpectacularSyncEngineTests-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;

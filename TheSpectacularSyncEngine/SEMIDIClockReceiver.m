@@ -142,7 +142,7 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
             continue;
         }
         
-        #ifdef DEBUG_ALL_MESSAGES
+#ifdef DEBUG_ALL_MESSAGES
         NSLog(@"%llu: %@",
               timestamp,
               packet->data[0] == SEMIDIMessageClockStart ? @"Start" :
@@ -150,7 +150,7 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
               packet->data[0] == SEMIDIMessageContinue ? @"Continue" :
               packet->data[0] == SEMIDIMessageSongPosition ? @"Song Position" :
               packet->data[0] == SEMIDIMessageClock ? @"Clock" : @"Other message");
-        #endif
+#endif
         
         switch ( packet->data[0] ) {
             case SEMIDIMessageClockStart:
@@ -352,9 +352,9 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                     }
                     
                     if ( reportUpdate ) {
-                        #ifdef DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
                         NSLog(@"Tempo is now %lf (was %lf)", tempo, THIS->_tempo);
-                        #endif
+#endif
                         
                         THIS->_tempo = tempo;
                         THIS->_sampleCountSinceLastTempoUpdate = 0;
@@ -670,7 +670,7 @@ static void SESampleBufferIntegrateSample(SESampleBuffer *buffer, uint64_t sampl
         }
     }
     
-    #ifdef DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
     // Diagnosis logging
     if ( sample < 1e9 ) {
         // Tick interval
@@ -694,7 +694,7 @@ static void SESampleBufferIntegrateSample(SESampleBuffer *buffer, uint64_t sampl
               SEHostTicksToSeconds(buffer->standardDeviation),
               ((double)buffer->standardDeviation / (double)buffer->mean) * 0.5 * 100.0);
     }
-    #endif
+#endif
 
 }
 

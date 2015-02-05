@@ -137,6 +137,26 @@
 
 }
 
+- (void)testStartWithoutPrecedingTempoTicks {
+    uint64_t startTime = SECurrentTimeInHostTicks();
+    _sender.tempo = 125;
+    [_sender startAtTime:startTime];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1.0]];
+    
+    XCTAssertTrue(_receiver.clockRunning);
+    XCTAssertEqualWithAccuracy([_receiver timelinePositionForTime:startTime], 0, SESecondsToHostTicks(1.0e-6));
+    XCTAssertEqual(_observer.observations.count, 3);
+    XCTAssertEqualObjects(_observer.observations[0], @"receivingTempo");
+    XCTAssertEqualObjects(_observer.observations[1], @"tempo");
+    XCTAssertEqualObjects(_observer.observations[2], @"clockRunning");
+    XCTAssertEqual(_observer.notifications.count, 3);
+    XCTAssertEqualObjects(((NSNotification*)_observer.notifications[0]).name, SEMIDIClockReceiverDidStartTempoSyncNotification);
+    XCTAssertEqualObjects(((NSNotification*)_observer.notifications[1]).name, SEMIDIClockReceiverDidChangeTempoNotification);
+    XCTAssertEqualObjects(((NSNotification*)_observer.notifications[2]).name, SEMIDIClockReceiverDidStartNotification);
+    
+    XCTAssertEqual(_receiver.error, 0);
+}
+
 - (void)testStartWithOffset {
     _sender.tempo = 125;
     double initialTimelinePosition = 10;

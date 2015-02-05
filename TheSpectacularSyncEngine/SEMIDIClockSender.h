@@ -24,10 +24,14 @@ extern "C" {
  *  changes.
  *
  *  To use it, initialise it with an object that implements SEMIDIClockSenderInterface,
- *  used to send outgoing messages, and provide a tempo via the tempo property. The sender
- *  will immediately begin sending ticks to sync the tempo. Optionally set the
- *  timelinePosition property to cue playback to a particular position in your app's 
- *  timeline. Call startAtTime: to start the clock and begin advancing the timeline.
+ *  used to send outgoing messages. Then provide a tempo via the tempo property, and 
+ *  call startAtTime: to start the clock and begin advancing the timeline.
+ *
+ *  Note that, due to the general lack of acceptable support for Song Position and
+ *  Continue messages in apps and some hardware, use of the timeline position facilities
+ *  of this class may have no effect in receivers with a limited implementation.
+ *  Furthermore, for related technical reasons this class will only send clock ticks
+ *  when the clock is started.
  */
 @interface SEMIDIClockSender : NSObject
 
@@ -44,27 +48,19 @@ extern "C" {
  * Start clock
  *
  *  The clock will be started. Make sure you have provided a tempo first, via the
- *  tempo property, ideally well in advance of starting the clock in order to provide
- *  ample time for convergence.
+ *  tempo property.
  *
- *  If you pass a zero timestamp (recommended), this method will determine the next safe
- *  timestamp for the start action, within the next few tens of milliseconds, and will
- *  return this timestamp to you. You should wait to start the timeline in your own app 
- *  until this time is reached, to ensure sync.
- *
- *  If you pass a non-zero timestamp that is within around a hundred milliseconds of the
- *  current time, you may experience some sync discrepancies for a little while after
- *  the remote clock is started. This is due to interference from scheduled ticks that
- *  this class has sent in advance, in order to overcome system congestion and latency.
+ *  Pass a timestamp at which to apply the start, to achieve the best sync.
  *
  *  If you are starting the clock anywhere but the beginning of your app's timeline,
  *  be sure to first assign a value to the timelinePosition property to cue playback
- *  position.
+ *  position. Note that due to generally poor support of Song Position/Continue in
+ *  receivers, this may have no effect, however.
  *
  * @param applyTime The global timestamp at which to start the clock, in host ticks,
- *      or zero (recommended). See mach_absolute_time, or SECurrentTimeInHostTicks
- * @return The timestamp at which the start will occur. Your app should wait until this
- *      time before starting the local clock.
+ *      or zero. See mach_absolute_time, or SECurrentTimeInHostTicks
+ * @return The timestamp at which the start will occur. If you passed zero for applyTime,
+ *      your app should wait until this time before starting the local clock.
  */
 -(uint64_t)startAtTime:(uint64_t)applyTime;
 
@@ -88,6 +84,9 @@ extern "C" {
  *  This method will cause the sender to send the new timeline position, and is designed for
  *  use while the clock is running (not recommended by the MIDI standard, but sometimes
  *  unavoidable, such as while continuously looping over a region).
+ *
+ *  Note that due to generally poor support of Song Position/Continue in receivers, this may
+ *  have no effect.
  *
  *  It is recommended that you limit resolution to 16th notes (0.25). If you do so, and
  *  you provide a zero apply timestamp (recommended), then this method will automatically
@@ -130,8 +129,11 @@ extern "C" {
 /*!
  * The current position in the timeline (in beats)
  *
- *  Use this property to cue playback to the given the timeline position, in beats 
+ *  Assign a value to this property to cue playback to the given the timeline position, in beats
  *  (that is, quarter notes - use SESecondsToBeats to convert from seconds, if necessary).
+ *
+ *  Note that due to generally poor support of Song Position/Continue in receivers, this may
+ *  have no effect.
  *
  *  Important: The MIDI standard recommends that the timeline position only be changed while 
  *  the clock is stopped, to avoid sync problems. When the clock is stopped, setting this 
@@ -151,14 +153,8 @@ extern "C" {
 /*!
  * The current tempo (beats per minute)
  *
- *  Use this property to assign a new tempo; it will immediately be synced to the
- *  remote side by adjusting the rate at which clock ticks are transmitted.
- *
- *  Note that depending on the remote implementation, convergence to the new tempo
- *  may not be immediate, so it is recommended that you provide a tempo as far in
- *  advance of starting the clock as possible.
- *
- *  If you set this value to zero, the sender will cease sending clock messages.
+ *  Use this property to assign a tempo - be sure to assign a tempo prior to starting the
+ *  clock.
  */
 @property (nonatomic) double tempo;
 

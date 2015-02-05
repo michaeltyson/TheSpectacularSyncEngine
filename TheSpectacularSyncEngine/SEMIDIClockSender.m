@@ -15,6 +15,12 @@ static const NSTimeInterval kTickResyncThreshold            = 1.0e-6; // If tick
 static const double kThreadPriority                         = 0.8;    // Priority of the sender thread
 static const int kMaxPendingMessages                        = 10;     // Size of pending message buffer
 
+// #define SUPPORT_TEMPO_TICKS_OUTSIDE_TIMELINE // Uncomment to enable sending tempo ticks when clock is stopped
+
+#if defined(TEST_RIG_BUILD) && !defined(SUPPORT_TEMPO_TICKS_OUTSIDE_TIMELINE)
+#define SUPPORT_TEMPO_TICKS_OUTSIDE_TIMELINE
+#endif
+
 @interface SEMIDIClockSenderThread : NSThread
 @property (nonatomic, weak) SEMIDIClockSender * sender;
 @end
@@ -70,6 +76,14 @@ static const int kMaxPendingMessages                        = 10;     // Size of
         
         self.started = NO;
     }
+    
+#ifndef SUPPORT_TEMPO_TICKS_OUTSIDE_TIMELINE
+    if ( _thread ) {
+        // Stop the thread
+        [_thread cancel];
+        self.thread = nil;
+    }
+#endif
 }
 
 -(uint64_t)setActiveTimelinePosition:(double)timelinePosition atTime:(uint64_t)applyTime {
@@ -121,6 +135,7 @@ static const int kMaxPendingMessages                        = 10;     // Size of
         _tempo = tempo;
     }
     
+#ifdef SUPPORT_TEMPO_TICKS_OUTSIDE_TIMELINE
     if ( tempo != 0.0 && !_thread ) {
         // Start the thread which will send out the ticks - in a moment, in case clock is started next
         [self performSelector:@selector(startThread) withObject:nil afterDelay:0.0];
@@ -129,6 +144,7 @@ static const int kMaxPendingMessages                        = 10;     // Size of
         [_thread cancel];
         self.thread = nil;
     }
+#endif
 }
 
 -(uint64_t)startOrSeekWithPosition:(double)timelinePosition atTime:(uint64_t)applyTime startClock:(BOOL)start {
