@@ -1,5 +1,5 @@
 //
-//  DSPlayPauseButton.h
+//  SEPlayPauseButton.h
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 7/01/2015.
@@ -9,6 +9,6 @@
 @import UIKit;
 
 IB_DESIGNABLE
-@interface DSPlayPauseButton : UIButton
+@interface SEPlayPauseButton : UIButton
 
 @end

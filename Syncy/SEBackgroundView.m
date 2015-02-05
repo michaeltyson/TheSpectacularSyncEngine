@@ -1,14 +1,14 @@
 //
-//  DSBackgroundView.m
+//  SEBackgroundView.m
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 1/01/2015.
 //  Copyright (c) 2015 A Tasty Pixel. All rights reserved.
 //
 
-#import "DSBackgroundView.h"
+#import "SEBackgroundView.h"
 
-@implementation DSBackgroundView
+@implementation SEBackgroundView
 
 -(void)drawRect:(CGRect)rect {
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();

@@ -1,23 +1,23 @@
 //
-//  DSAppDelegate.m
+//  SEAppDelegate.m
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 31/12/2014.
 //  Copyright (c) 2015 A Tasty Pixel. All rights reserved.
 //
 
-#import "DSAppDelegate.h"
-#import "DSAudioEngine.h"
-#import "DSMetronome.h"
+#import "SEAppDelegate.h"
+#import "SEAudioEngine.h"
+#import "SEMetronome.h"
 #import "SEMIDIClockReceiver.h"
 #import "SEMIDIClockReceiverCoreMIDIInterface.h"
 #import "SEMIDIClockSender.h"
 #import "SEMIDIClockSenderCoreMIDIInterface.h"
-#import "DSMainViewController.h"
+#import "SEMainViewController.h"
 
-@interface DSAppDelegate ()
-@property (nonatomic) DSAudioEngine *audioEngine;
-@property (nonatomic) DSMetronome *metronome;
+@interface SEAppDelegate ()
+@property (nonatomic) SEAudioEngine *audioEngine;
+@property (nonatomic) SEMetronome *metronome;
 @property (nonatomic) SEMIDIClockReceiver *receiver;
 @property (nonatomic) SEMIDIClockReceiverCoreMIDIInterface *receiverInterface;
 @property (nonatomic) SEMIDIClockSender *sender;
@@ -25,12 +25,12 @@
 @property (nonatomic) NSTimer *shutdownTimer;
 @end
 
-@interface DSAppDelegateProxy : NSProxy
--(instancetype)initWithTarget:(DSAppDelegate*)target;
-@property (nonatomic, weak) DSAppDelegate * target;
+@interface SEAppDelegateProxy : NSProxy
+-(instancetype)initWithTarget:(SEAppDelegate*)target;
+@property (nonatomic, weak) SEAppDelegate * target;
 @end
 
-@implementation DSAppDelegate
+@implementation SEAppDelegate
 
 -(void)dealloc {
     if ( _shutdownTimer ) {
@@ -47,12 +47,12 @@
     self.senderInterface = [[SEMIDIClockSenderCoreMIDIInterface alloc] init];
     self.sender = [[SEMIDIClockSender alloc] initWithInterface:_senderInterface];
     
-    self.metronome = [DSMetronome new];
+    self.metronome = [SEMetronome new];
     
-    self.audioEngine = [[DSAudioEngine alloc] initWithAudioProvider:_metronome];
+    self.audioEngine = [[SEAudioEngine alloc] initWithAudioProvider:_metronome];
     [_audioEngine start];
     
-    DSMainViewController *viewController = (DSMainViewController*)self.window.rootViewController;
+    SEMainViewController *viewController = (SEMainViewController*)self.window.rootViewController;
     viewController.metronome = _metronome;
     viewController.sender = _sender;
     viewController.receiver = _receiver;
@@ -84,7 +84,7 @@
 
 -(void)applicationDidEnterBackground:(UIApplication *)application {
     if ( !_metronome.started && !_receiver.receivingTempo && !_shutdownTimer ) {
-        self.shutdownTimer = [NSTimer scheduledTimerWithTimeInterval:30.0 target:[[DSAppDelegateProxy alloc] initWithTarget:self] selector:@selector(shutdown) userInfo:nil repeats:NO];
+        self.shutdownTimer = [NSTimer scheduledTimerWithTimeInterval:30.0 target:[[SEAppDelegateProxy alloc] initWithTarget:self] selector:@selector(shutdown) userInfo:nil repeats:NO];
     }
 }
 
@@ -101,15 +101,15 @@
 
 -(void)wentInactive:(NSNotification*)notification {
     if ( [[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground && !_metronome.started && !_receiver.receivingTempo && !_shutdownTimer ) {
-        self.shutdownTimer = [NSTimer scheduledTimerWithTimeInterval:30.0 target:[[DSAppDelegateProxy alloc] initWithTarget:self] selector:@selector(shutdown) userInfo:nil repeats:NO];
+        self.shutdownTimer = [NSTimer scheduledTimerWithTimeInterval:30.0 target:[[SEAppDelegateProxy alloc] initWithTarget:self] selector:@selector(shutdown) userInfo:nil repeats:NO];
     }
 }
 
 @end
 
 
-@implementation DSAppDelegateProxy
--(instancetype)initWithTarget:(DSAppDelegate*)target {
+@implementation SEAppDelegateProxy
+-(instancetype)initWithTarget:(SEAppDelegate*)target {
     self.target = target;
     return self;
 }

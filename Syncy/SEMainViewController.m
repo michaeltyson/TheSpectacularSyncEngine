@@ -1,16 +1,16 @@
 //
-//  DSMainViewController.m
+//  SEMainViewController.m
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 31/12/2014.
 //  Copyright (c) 2015 A Tasty Pixel. All rights reserved.
 //
 
-#import "DSMainViewController.h"
-#import "DSMetronome.h"
+#import "SEMainViewController.h"
+#import "SEMetronome.h"
 #import "SEMIDIClockReceiver.h"
 #import "SEMIDIClockSender.h"
-#import "DSTempoPulseView.h"
+#import "SETempoPulseView.h"
 #import "SEMIDISourcesTableViewController.h"
 #import "SEMIDIDestinationsTableViewController.h"
 
@@ -18,14 +18,14 @@ static NSString * const kPulseAnimationKey = @"pulse";
 
 static const double kTempoDragVelocity = 0.15;
 
-@interface DSMainViewController () {
+@interface SEMainViewController () {
     double _preDragTempo;
 }
 @property (nonatomic) NSTimer * updateTimer;
 @property (nonatomic) UIPanGestureRecognizer * tempoDragGestureRecognizer;
 @end
 
-@implementation DSMainViewController
+@implementation SEMainViewController
 
 -(void)dealloc {
     self.metronome = nil;
@@ -85,11 +85,11 @@ static const double kTempoDragVelocity = 0.15;
     }
 }
 
--(void)setMetronome:(DSMetronome *)metronome {
+-(void)setMetronome:(SEMetronome *)metronome {
     if ( _metronome ) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:DSMetronomeDidStartNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:DSMetronomeDidStopNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:DSMetronomeDidChangeTempoNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:SEMetronomeDidStartNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:SEMetronomeDidStopNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:SEMetronomeDidChangeTempoNotification object:_metronome];
     }
     
     _metronome = metronome;
@@ -100,9 +100,9 @@ static const double kTempoDragVelocity = 0.15;
     }
     
     if (_metronome ) {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(started:) name:DSMetronomeDidStartNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stopped:) name:DSMetronomeDidStopNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(changedTempo:) name:DSMetronomeDidChangeTempoNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(started:) name:SEMetronomeDidStartNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stopped:) name:SEMetronomeDidStopNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(changedTempo:) name:SEMetronomeDidChangeTempoNotification object:_metronome];
     }
 }
 
@@ -185,7 +185,7 @@ static const double kTempoDragVelocity = 0.15;
     _playPauseButton.selected = _metronome.started;
     
     if ( !_sender.started ) {
-        [_sender startAtTime:[notification.userInfo[DSNotificationTimestampKey] unsignedLongLongValue]];
+        [_sender startAtTime:[notification.userInfo[SENotificationTimestampKey] unsignedLongLongValue]];
     }
 }
 

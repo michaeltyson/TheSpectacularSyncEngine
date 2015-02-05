@@ -1,5 +1,5 @@
 //
-//  DSGraphics.h
+//  SEGraphics.h
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 7/01/2015.
@@ -12,7 +12,7 @@
 #import <UIKit/UIKit.h>
 
 
-@interface DSGraphics : NSObject
+@interface SEGraphics : NSObject
 
 // Colors
 + (UIColor*)activeColor;

@@ -1,5 +1,5 @@
 //
-//  DSTempoPulseView.h
+//  SETempoPulseView.h
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 6/01/2015.
@@ -8,10 +8,10 @@
 
 @import UIKit;
 
-@class DSMetronome;
+@class SEMetronome;
 
 IB_DESIGNABLE
-@interface DSTempoPulseView : UIView
-@property (nonatomic) DSMetronome *metronome;
+@interface SETempoPulseView : UIView
+@property (nonatomic) SEMetronome *metronome;
 @property (nonatomic) BOOL indeterminate;
 @end

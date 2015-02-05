@@ -1,5 +1,5 @@
 //
-//  DSBackgroundView.h
+//  SEBackgroundView.h
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 1/01/2015.
@@ -9,6 +9,6 @@
 #import <UIKit/UIKit.h>
 
 IB_DESIGNABLE
-@interface DSBackgroundView : UIView
+@interface SEBackgroundView : UIView
 
 @end

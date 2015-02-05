@@ -1,12 +1,12 @@
 //
-//  DSAudioEngine.m
+//  SEAudioEngine.m
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 31/12/2014.
 //  Copyright (c) 2015 A Tasty Pixel. All rights reserved.
 //
 
-#import "DSAudioEngine.h"
+#import "SEAudioEngine.h"
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
 
@@ -20,18 +20,18 @@ static inline BOOL _checkResult(OSStatus result, const char *operation, const ch
 }
 
 
-@interface DSAudioEngine () {
+@interface SEAudioEngine () {
     AudioUnit _audioUnit;
-    DSAudioEngineRenderCallback _providerRenderCallback;
+    SEAudioEngineRenderCallback _providerRenderCallback;
 }
-@property (nonatomic, strong) id<DSAudioEngineAudioProvider> provider;
+@property (nonatomic, strong) id<SEAudioEngineAudioProvider> provider;
 @property (nonatomic, strong) id observerToken;
 @end
 
 
-@implementation DSAudioEngine
+@implementation SEAudioEngine
 
--(instancetype)initWithAudioProvider:(id<DSAudioEngineAudioProvider>)provider {
+-(instancetype)initWithAudioProvider:(id<SEAudioEngineAudioProvider>)provider {
     if ( !(self = [super init]) ) return nil;
     
     self.provider = provider;
@@ -75,7 +75,7 @@ static inline BOOL _checkResult(OSStatus result, const char *operation, const ch
     checkResult(AudioComponentInstanceNew(inputComponent, &_audioUnit), "AudioComponentInstanceNew");
     
     // Set the stream formats
-    AudioStreamBasicDescription clientFormat = [DSAudioEngine nonInterleavedFloatStereoAudioDescription];
+    AudioStreamBasicDescription clientFormat = [SEAudioEngine nonInterleavedFloatStereoAudioDescription];
     checkResult(AudioUnitSetProperty(_audioUnit, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input, 0, &clientFormat, sizeof(clientFormat)),
                 "kAudioUnitProperty_StreamFormat");
     
@@ -160,7 +160,7 @@ static OSStatus audioUnitRenderCallback(void *inRefCon, AudioUnitRenderActionFla
         memset(ioData->mBuffers[i].mData, 0, ioData->mBuffers[i].mDataByteSize);
     }
     
-    __unsafe_unretained DSAudioEngine *THIS = (__bridge DSAudioEngine*)inRefCon;
+    __unsafe_unretained SEAudioEngine *THIS = (__bridge SEAudioEngine*)inRefCon;
     THIS->_providerRenderCallback(THIS->_provider, inTimeStamp, ioData, inNumberFrames);
     
     return noErr;

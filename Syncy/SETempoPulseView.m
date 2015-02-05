@@ -1,25 +1,25 @@
 //
-//  DSTempoPulseView.m
+//  SETempoPulseView.m
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 6/01/2015.
 //  Copyright (c) 2015 A Tasty Pixel. All rights reserved.
 //
 
-#import "DSTempoPulseView.h"
+#import "SETempoPulseView.h"
 @import QuartzCore;
-#import "DSMetronome.h"
+#import "SEMetronome.h"
 
 static NSString * const kAnimationName = @"animation";
 
-@interface DSTempoPulseView () {
+@interface SETempoPulseView () {
     uint64_t _timeBase;
 }
 @property (nonatomic) CALayer * animationLayer;
 @property (nonatomic) CABasicAnimation * animation;
 @end
 
-@implementation DSTempoPulseView
+@implementation SETempoPulseView
 
 -(instancetype)initWithFrame:(CGRect)frame {
     if ( !(self = [super initWithFrame:frame]) ) return nil;
@@ -71,21 +71,21 @@ static NSString * const kAnimationName = @"animation";
     [self setupAnimation];
 }
 
--(void)setMetronome:(DSMetronome *)metronome {
+-(void)setMetronome:(SEMetronome *)metronome {
     if ( _metronome ) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:DSMetronomeDidChangeTempoNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:DSMetronomeDidChangeTimelineNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:DSMetronomeDidStartNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:DSMetronomeDidStopNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:SEMetronomeDidChangeTempoNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:SEMetronomeDidChangeTimelineNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:SEMetronomeDidStartNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] removeObserver:self name:SEMetronomeDidStopNotification object:_metronome];
     }
     
     _metronome = metronome;
     
     if (_metronome ) {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:DSMetronomeDidChangeTempoNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:DSMetronomeDidChangeTimelineNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:DSMetronomeDidStartNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:DSMetronomeDidStopNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:SEMetronomeDidChangeTempoNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:SEMetronomeDidChangeTimelineNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:SEMetronomeDidStartNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:SEMetronomeDidStopNotification object:_metronome];
         
         [self setupAnimation];
     }

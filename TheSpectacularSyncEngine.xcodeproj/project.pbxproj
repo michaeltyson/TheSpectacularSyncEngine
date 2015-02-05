@@ -10,12 +10,12 @@
 		4C033EAE1A7C4FE5002200A2 /* SEIntegrationTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C033EAD1A7C4FE5002200A2 /* SEIntegrationTests.m */; };
 		4C033EB11A7C50C1002200A2 /* SETestObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C033EB01A7C50C1002200A2 /* SETestObserver.m */; };
 		4C04766C1A53E19900894457 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C04766B1A53E19900894457 /* main.m */; };
-		4C04766F1A53E19900894457 /* DSAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C04766E1A53E19900894457 /* DSAppDelegate.m */; };
-		4C0476721A53E19900894457 /* DSMainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C0476711A53E19900894457 /* DSMainViewController.m */; };
+		4C04766F1A53E19900894457 /* SEAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C04766E1A53E19900894457 /* SEAppDelegate.m */; };
+		4C0476721A53E19900894457 /* SEMainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C0476711A53E19900894457 /* SEMainViewController.m */; };
 		4C0476751A53E19900894457 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4C0476731A53E19900894457 /* Main.storyboard */; };
 		4C0476771A53E19900894457 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4C0476761A53E19900894457 /* Images.xcassets */; };
 		4C04767A1A53E19900894457 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4C0476781A53E19900894457 /* LaunchScreen.xib */; };
-		4C0476911A53E1DC00894457 /* DSAudioEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C0476901A53E1DC00894457 /* DSAudioEngine.m */; };
+		4C0476911A53E1DC00894457 /* SEAudioEngine.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C0476901A53E1DC00894457 /* SEAudioEngine.m */; };
 		4C27A87A1A5F690800BE0518 /* SECommon.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8691A5F690800BE0518 /* SECommon.m */; };
 		4C27A87B1A5F690800BE0518 /* SECommon.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A8691A5F690800BE0518 /* SECommon.m */; };
 		4C27A87C1A5F690800BE0518 /* SEMIDIClockReceiver.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C27A86B1A5F690800BE0518 /* SEMIDIClockReceiver.m */; };
@@ -38,23 +38,23 @@
 		4C6CCF871A64A52F0015EC2F /* SEMIDINetworkMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C6CCF861A64A52F0015EC2F /* SEMIDINetworkMonitor.m */; };
 		4C6CCF881A64A52F0015EC2F /* SEMIDINetworkMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C6CCF861A64A52F0015EC2F /* SEMIDINetworkMonitor.m */; };
 		4C8D302F1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 4C8D302E1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m */; };
-		4CC0C7C91A55486A004AC6FE /* DSBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CC0C7C81A55486A004AC6FE /* DSBackgroundView.m */; };
+		4CC0C7C91A55486A004AC6FE /* SEBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CC0C7C81A55486A004AC6FE /* SEBackgroundView.m */; };
 		4CCC54831A64EA1500B2706D /* SEMIDIEndpoint.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CCC54821A64EA1500B2706D /* SEMIDIEndpoint.m */; };
 		4CCC54841A64EA1500B2706D /* SEMIDIEndpoint.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CCC54821A64EA1500B2706D /* SEMIDIEndpoint.m */; };
-		4CD2FA5D1A5CCF1500070D06 /* DSPlayPauseButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD2FA5C1A5CCF1500070D06 /* DSPlayPauseButton.m */; };
-		4CD2FA601A5CDAFE00070D06 /* DSMetronome.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD2FA5F1A5CDAFE00070D06 /* DSMetronome.m */; };
+		4CD2FA5D1A5CCF1500070D06 /* SEPlayPauseButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD2FA5C1A5CCF1500070D06 /* SEPlayPauseButton.m */; };
+		4CD2FA601A5CDAFE00070D06 /* SEMetronome.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD2FA5F1A5CDAFE00070D06 /* SEMetronome.m */; };
 		4CD2FA651A5D21EC00070D06 /* TPDismissSegue.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CD2FA641A5D21EC00070D06 /* TPDismissSegue.m */; };
-		4CDED2FD1A5BB37D0091ABAB /* DSTempoPulseView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CDED2FC1A5BB37D0091ABAB /* DSTempoPulseView.m */; };
-		4CDED3001A5BC63B0091ABAB /* DSGraphics.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CDED2FF1A5BC63B0091ABAB /* DSGraphics.m */; };
+		4CDED2FD1A5BB37D0091ABAB /* SETempoPulseView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CDED2FC1A5BB37D0091ABAB /* SETempoPulseView.m */; };
+		4CDED3001A5BC63B0091ABAB /* SEGraphics.m in Sources */ = {isa = PBXBuildFile; fileRef = 4CDED2FF1A5BC63B0091ABAB /* SEGraphics.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		4C4438DA1A5407C800176535 /* PBXContainerItemProxy */ = {
+		4C2CC6B11A82FE610079C224 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 4C04765E1A53E19900894457 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 4C0476651A53E19900894457;
-			remoteInfo = SEMIDIClock;
+			remoteInfo = Syncy;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -65,15 +65,15 @@
 		4C0476661A53E19900894457 /* Syncy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Syncy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C04766A1A53E19900894457 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4C04766B1A53E19900894457 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		4C04766D1A53E19900894457 /* DSAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DSAppDelegate.h; sourceTree = "<group>"; };
-		4C04766E1A53E19900894457 /* DSAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DSAppDelegate.m; sourceTree = "<group>"; };
-		4C0476701A53E19900894457 /* DSMainViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DSMainViewController.h; sourceTree = "<group>"; };
-		4C0476711A53E19900894457 /* DSMainViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DSMainViewController.m; sourceTree = "<group>"; };
+		4C04766D1A53E19900894457 /* SEAppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SEAppDelegate.h; sourceTree = "<group>"; };
+		4C04766E1A53E19900894457 /* SEAppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SEAppDelegate.m; sourceTree = "<group>"; };
+		4C0476701A53E19900894457 /* SEMainViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SEMainViewController.h; sourceTree = "<group>"; };
+		4C0476711A53E19900894457 /* SEMainViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SEMainViewController.m; sourceTree = "<group>"; };
 		4C0476741A53E19900894457 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		4C0476761A53E19900894457 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		4C0476791A53E19900894457 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/LaunchScreen.xib; sourceTree = "<group>"; };
-		4C04768F1A53E1DC00894457 /* DSAudioEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSAudioEngine.h; sourceTree = "<group>"; };
-		4C0476901A53E1DC00894457 /* DSAudioEngine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSAudioEngine.m; sourceTree = "<group>"; };
+		4C04768F1A53E1DC00894457 /* SEAudioEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SEAudioEngine.h; sourceTree = "<group>"; };
+		4C0476901A53E1DC00894457 /* SEAudioEngine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEAudioEngine.m; sourceTree = "<group>"; };
 		4C27A8681A5F690800BE0518 /* SECommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SECommon.h; path = TheSpectacularSyncEngine/SECommon.h; sourceTree = "<group>"; };
 		4C27A8691A5F690800BE0518 /* SECommon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SECommon.m; path = TheSpectacularSyncEngine/SECommon.m; sourceTree = "<group>"; };
 		4C27A86A1A5F690800BE0518 /* SEMIDIClockReceiver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDIClockReceiver.h; path = TheSpectacularSyncEngine/SEMIDIClockReceiver.h; sourceTree = "<group>"; };
@@ -103,20 +103,20 @@
 		4C6CCF851A64A52F0015EC2F /* SEMIDINetworkMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDINetworkMonitor.h; path = TheSpectacularSyncEngine/SEMIDINetworkMonitor.h; sourceTree = "<group>"; };
 		4C6CCF861A64A52F0015EC2F /* SEMIDINetworkMonitor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDINetworkMonitor.m; path = TheSpectacularSyncEngine/SEMIDINetworkMonitor.m; sourceTree = "<group>"; };
 		4C8D302E1A551A1A00ACA7E0 /* SEMIDIClockReceiverTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEMIDIClockReceiverTests.m; sourceTree = "<group>"; };
-		4CC0C7C71A55486A004AC6FE /* DSBackgroundView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSBackgroundView.h; sourceTree = "<group>"; };
-		4CC0C7C81A55486A004AC6FE /* DSBackgroundView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSBackgroundView.m; sourceTree = "<group>"; };
+		4CC0C7C71A55486A004AC6FE /* SEBackgroundView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SEBackgroundView.h; sourceTree = "<group>"; };
+		4CC0C7C81A55486A004AC6FE /* SEBackgroundView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEBackgroundView.m; sourceTree = "<group>"; };
 		4CCC54811A64EA1500B2706D /* SEMIDIEndpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SEMIDIEndpoint.h; path = TheSpectacularSyncEngine/SEMIDIEndpoint.h; sourceTree = "<group>"; };
 		4CCC54821A64EA1500B2706D /* SEMIDIEndpoint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SEMIDIEndpoint.m; path = TheSpectacularSyncEngine/SEMIDIEndpoint.m; sourceTree = "<group>"; };
-		4CD2FA5B1A5CCF1500070D06 /* DSPlayPauseButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSPlayPauseButton.h; sourceTree = "<group>"; };
-		4CD2FA5C1A5CCF1500070D06 /* DSPlayPauseButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSPlayPauseButton.m; sourceTree = "<group>"; };
-		4CD2FA5E1A5CDAFE00070D06 /* DSMetronome.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSMetronome.h; sourceTree = "<group>"; };
-		4CD2FA5F1A5CDAFE00070D06 /* DSMetronome.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSMetronome.m; sourceTree = "<group>"; };
+		4CD2FA5B1A5CCF1500070D06 /* SEPlayPauseButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SEPlayPauseButton.h; sourceTree = "<group>"; };
+		4CD2FA5C1A5CCF1500070D06 /* SEPlayPauseButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEPlayPauseButton.m; sourceTree = "<group>"; };
+		4CD2FA5E1A5CDAFE00070D06 /* SEMetronome.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SEMetronome.h; sourceTree = "<group>"; };
+		4CD2FA5F1A5CDAFE00070D06 /* SEMetronome.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEMetronome.m; sourceTree = "<group>"; };
 		4CD2FA631A5D21EC00070D06 /* TPDismissSegue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TPDismissSegue.h; sourceTree = "<group>"; };
 		4CD2FA641A5D21EC00070D06 /* TPDismissSegue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TPDismissSegue.m; sourceTree = "<group>"; };
-		4CDED2FB1A5BB37D0091ABAB /* DSTempoPulseView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSTempoPulseView.h; sourceTree = "<group>"; };
-		4CDED2FC1A5BB37D0091ABAB /* DSTempoPulseView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSTempoPulseView.m; sourceTree = "<group>"; };
-		4CDED2FE1A5BC63B0091ABAB /* DSGraphics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DSGraphics.h; sourceTree = "<group>"; };
-		4CDED2FF1A5BC63B0091ABAB /* DSGraphics.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DSGraphics.m; sourceTree = "<group>"; };
+		4CDED2FB1A5BB37D0091ABAB /* SETempoPulseView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SETempoPulseView.h; sourceTree = "<group>"; };
+		4CDED2FC1A5BB37D0091ABAB /* SETempoPulseView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SETempoPulseView.m; sourceTree = "<group>"; };
+		4CDED2FE1A5BC63B0091ABAB /* SEGraphics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SEGraphics.h; sourceTree = "<group>"; };
+		4CDED2FF1A5BC63B0091ABAB /* SEGraphics.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SEGraphics.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -163,8 +163,8 @@
 		4C0476681A53E19900894457 /* Sample App: Syncy */ = {
 			isa = PBXGroup;
 			children = (
-				4C04766D1A53E19900894457 /* DSAppDelegate.h */,
-				4C04766E1A53E19900894457 /* DSAppDelegate.m */,
+				4C04766D1A53E19900894457 /* SEAppDelegate.h */,
+				4C04766E1A53E19900894457 /* SEAppDelegate.m */,
 				4CD2FA661A5D231300070D06 /* Controllers */,
 				4CD2FA621A5CE63D00070D06 /* Models */,
 				4CD2FA611A5CE63700070D06 /* Views */,
@@ -253,14 +253,14 @@
 		4CD2FA611A5CE63700070D06 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				4CC0C7C71A55486A004AC6FE /* DSBackgroundView.h */,
-				4CC0C7C81A55486A004AC6FE /* DSBackgroundView.m */,
-				4CDED2FB1A5BB37D0091ABAB /* DSTempoPulseView.h */,
-				4CDED2FC1A5BB37D0091ABAB /* DSTempoPulseView.m */,
-				4CDED2FE1A5BC63B0091ABAB /* DSGraphics.h */,
-				4CDED2FF1A5BC63B0091ABAB /* DSGraphics.m */,
-				4CD2FA5B1A5CCF1500070D06 /* DSPlayPauseButton.h */,
-				4CD2FA5C1A5CCF1500070D06 /* DSPlayPauseButton.m */,
+				4CC0C7C71A55486A004AC6FE /* SEBackgroundView.h */,
+				4CC0C7C81A55486A004AC6FE /* SEBackgroundView.m */,
+				4CDED2FB1A5BB37D0091ABAB /* SETempoPulseView.h */,
+				4CDED2FC1A5BB37D0091ABAB /* SETempoPulseView.m */,
+				4CDED2FE1A5BC63B0091ABAB /* SEGraphics.h */,
+				4CDED2FF1A5BC63B0091ABAB /* SEGraphics.m */,
+				4CD2FA5B1A5CCF1500070D06 /* SEPlayPauseButton.h */,
+				4CD2FA5C1A5CCF1500070D06 /* SEPlayPauseButton.m */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -268,10 +268,10 @@
 		4CD2FA621A5CE63D00070D06 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				4C04768F1A53E1DC00894457 /* DSAudioEngine.h */,
-				4C0476901A53E1DC00894457 /* DSAudioEngine.m */,
-				4CD2FA5E1A5CDAFE00070D06 /* DSMetronome.h */,
-				4CD2FA5F1A5CDAFE00070D06 /* DSMetronome.m */,
+				4C04768F1A53E1DC00894457 /* SEAudioEngine.h */,
+				4C0476901A53E1DC00894457 /* SEAudioEngine.m */,
+				4CD2FA5E1A5CDAFE00070D06 /* SEMetronome.h */,
+				4CD2FA5F1A5CDAFE00070D06 /* SEMetronome.m */,
 			);
 			name = Models;
 			sourceTree = "<group>";
@@ -279,8 +279,8 @@
 		4CD2FA661A5D231300070D06 /* Controllers */ = {
 			isa = PBXGroup;
 			children = (
-				4C0476701A53E19900894457 /* DSMainViewController.h */,
-				4C0476711A53E19900894457 /* DSMainViewController.m */,
+				4C0476701A53E19900894457 /* SEMainViewController.h */,
+				4C0476711A53E19900894457 /* SEMainViewController.m */,
 			);
 			name = Controllers;
 			sourceTree = "<group>";
@@ -326,6 +326,7 @@
 			);
 			dependencies = (
 				4C4438DB1A5407C800176535 /* PBXTargetDependency */,
+				4C2CC6B21A82FE610079C224 /* PBXTargetDependency */,
 			);
 			name = TheSpectacularSyncEngineTests;
 			productName = Tests;
@@ -399,24 +400,24 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4CD2FA5D1A5CCF1500070D06 /* DSPlayPauseButton.m in Sources */,
-				4CDED3001A5BC63B0091ABAB /* DSGraphics.m in Sources */,
-				4C0476721A53E19900894457 /* DSMainViewController.m in Sources */,
+				4CD2FA5D1A5CCF1500070D06 /* SEPlayPauseButton.m in Sources */,
+				4CDED3001A5BC63B0091ABAB /* SEGraphics.m in Sources */,
+				4C0476721A53E19900894457 /* SEMainViewController.m in Sources */,
 				4C27A8821A5F690800BE0518 /* SEMIDIClockSender.m in Sources */,
 				4C6CCF871A64A52F0015EC2F /* SEMIDINetworkMonitor.m in Sources */,
 				4C27A8841A5F690800BE0518 /* SEMIDIClockSenderCoreMIDIInterface.m in Sources */,
-				4C04766F1A53E19900894457 /* DSAppDelegate.m in Sources */,
+				4C04766F1A53E19900894457 /* SEAppDelegate.m in Sources */,
 				4C27A87C1A5F690800BE0518 /* SEMIDIClockReceiver.m in Sources */,
 				4CD2FA651A5D21EC00070D06 /* TPDismissSegue.m in Sources */,
-				4C0476911A53E1DC00894457 /* DSAudioEngine.m in Sources */,
-				4CD2FA601A5CDAFE00070D06 /* DSMetronome.m in Sources */,
+				4C0476911A53E1DC00894457 /* SEAudioEngine.m in Sources */,
+				4CD2FA601A5CDAFE00070D06 /* SEMetronome.m in Sources */,
 				4C04766C1A53E19900894457 /* main.m in Sources */,
 				4C27A88A1A5F690800BE0518 /* SEMIDISourcesTableViewController.m in Sources */,
 				4CCC54831A64EA1500B2706D /* SEMIDIEndpoint.m in Sources */,
 				4C27A87A1A5F690800BE0518 /* SECommon.m in Sources */,
 				4C27A87E1A5F690800BE0518 /* SEMIDIClockReceiverCoreMIDIInterface.m in Sources */,
-				4CDED2FD1A5BB37D0091ABAB /* DSTempoPulseView.m in Sources */,
-				4CC0C7C91A55486A004AC6FE /* DSBackgroundView.m in Sources */,
+				4CDED2FD1A5BB37D0091ABAB /* SETempoPulseView.m in Sources */,
+				4CC0C7C91A55486A004AC6FE /* SEBackgroundView.m in Sources */,
 				4C27A8881A5F690800BE0518 /* SEMIDIDestinationsTableViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -444,10 +445,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		4C4438DB1A5407C800176535 /* PBXTargetDependency */ = {
+		4C2CC6B21A82FE610079C224 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 4C0476651A53E19900894457 /* Syncy */;
-			targetProxy = 4C4438DA1A5407C800176535 /* PBXContainerItemProxy */;
+			targetProxy = 4C2CC6B11A82FE610079C224 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -580,7 +581,7 @@
 		4C4438DD1A5407C800176535 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Syncy.app/Syncy";
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
@@ -595,7 +596,7 @@
 				INFOPLIST_FILE = "Tests/TheSpectacularSyncEngineTests-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				PRODUCT_NAME = TheSpectacularSyncEngineTests;
-				TEST_HOST = "$(BUNDLE_LOADER)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Syncy.app/Syncy";
 				WRAPPER_EXTENSION = xctest;
 			};
 			name = Debug;
@@ -603,7 +604,7 @@
 		4C4438DE1A5407C800176535 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/Syncy.app/Syncy";
+				BUNDLE_LOADER = "$(TEST_HOST)";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
 					"$(inherited)",
@@ -614,7 +615,7 @@
 				INFOPLIST_FILE = "Tests/TheSpectacularSyncEngineTests-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 7.1;
 				PRODUCT_NAME = TheSpectacularSyncEngineTests;
-				TEST_HOST = "$(BUNDLE_LOADER)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Syncy.app/Syncy";
 				WRAPPER_EXTENSION = xctest;
 			};
 			name = Release;

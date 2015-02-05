@@ -1,5 +1,5 @@
 //
-//  DSAppDelegate.h
+//  SEAppDelegate.h
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 31/12/2014.
@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface DSAppDelegate : UIResponder <UIApplicationDelegate>
+@interface SEAppDelegate : UIResponder <UIApplicationDelegate>
 
 @property (strong, nonatomic) UIWindow *window;
 

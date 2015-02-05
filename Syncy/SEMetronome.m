@@ -1,22 +1,22 @@
 //
-//  DSMetronome.m
+//  SEMetronome.m
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 7/01/2015.
 //  Copyright (c) 2015 A Tasty Pixel. All rights reserved.
 //
 
-#import "DSMetronome.h"
+#import "SEMetronome.h"
 #import "SECommon.h"
 
-NSString * const DSMetronomeDidStartNotification = @"DSMetronomeDidStartNotification";
-NSString * const DSMetronomeDidStopNotification = @"DSMetronomeDidStopNotification";
-NSString * const DSMetronomeDidChangeTimelineNotification = @"DSMetronomeDidChangeTimelineNotification";
-NSString * const DSMetronomeDidChangeTempoNotification = @"DSMetronomeDidChangeTempoNotification";
+NSString * const SEMetronomeDidStartNotification = @"SEMetronomeDidStartNotification";
+NSString * const SEMetronomeDidStopNotification = @"SEMetronomeDidStopNotification";
+NSString * const SEMetronomeDidChangeTimelineNotification = @"SEMetronomeDidChangeTimelineNotification";
+NSString * const SEMetronomeDidChangeTempoNotification = @"SEMetronomeDidChangeTempoNotification";
 
-NSString * const DSNotificationTimestampKey = @"timestamp";
-NSString * const DSNotificationPositionKey = @"position";
-NSString * const DSNotificationTempoKey = @"tempo";
+NSString * const SENotificationTimestampKey = @"timestamp";
+NSString * const SENotificationPositionKey = @"position";
+NSString * const SENotificationTempoKey = @"tempo";
 
 static const double kMajorBeatFrequency = 800;
 static const double kMinorBeatFrequency = 400;
@@ -31,18 +31,18 @@ typedef struct {
     UInt32 offset;
     UInt32 duration;
     UInt32 remainingFrames;
-} DSMetronomeTone;
+} SEMetronomeTone;
 
-@interface DSMetronome () {
+@interface SEMetronome () {
     uint64_t _timeBase;
     double _positionAtStart;
     uint64_t _lastRenderEnd;
     int _lastPlayedBeat;
-    DSMetronomeTone _tones[kMaxTones];
+    SEMetronomeTone _tones[kMaxTones];
 }
 @end
 
-@implementation DSMetronome
+@implementation SEMetronome
 @dynamic started;
 
 -(instancetype)init {
@@ -61,11 +61,11 @@ typedef struct {
     _lastPlayedBeat = -1;
     
     [self didChangeValueForKey:@"started"];
-    [[NSNotificationCenter defaultCenter] postNotificationName:DSMetronomeDidStartNotification
+    [[NSNotificationCenter defaultCenter] postNotificationName:SEMetronomeDidStartNotification
                                                         object:self
-                                                      userInfo:@{ DSNotificationPositionKey: @(_positionAtStart),
-                                                                  DSNotificationTempoKey: @(_tempo),
-                                                                  DSNotificationTimestampKey: @(applyTime) }];
+                                                      userInfo:@{ SENotificationPositionKey: @(_positionAtStart),
+                                                                  SENotificationTempoKey: @(_tempo),
+                                                                  SENotificationTimestampKey: @(applyTime) }];
 }
 
 -(void)stop {
@@ -76,7 +76,7 @@ typedef struct {
     _lastPlayedBeat = -1;
     [self didChangeValueForKey:@"started"];
     
-    [[NSNotificationCenter defaultCenter] postNotificationName:DSMetronomeDidStopNotification object:self];
+    [[NSNotificationCenter defaultCenter] postNotificationName:SEMetronomeDidStopNotification object:self];
 }
 
 -(BOOL)started {
@@ -90,10 +90,10 @@ typedef struct {
         _timeBase = applyTime - SEBeatsToHostTicks(timelinePosition, _tempo);
     }
     _lastPlayedBeat = -1;
-    [[NSNotificationCenter defaultCenter] postNotificationName:DSMetronomeDidChangeTimelineNotification
+    [[NSNotificationCenter defaultCenter] postNotificationName:SEMetronomeDidChangeTimelineNotification
                                                         object:self
-                                                      userInfo:@{ DSNotificationPositionKey: @(timelinePosition),
-                                                                  DSNotificationTimestampKey: @(applyTime) }];
+                                                      userInfo:@{ SENotificationPositionKey: @(timelinePosition),
+                                                                  SENotificationTimestampKey: @(applyTime) }];
 }
 
 -(double)timelinePositionForTime:(uint64_t)timestamp {
@@ -123,16 +123,16 @@ typedef struct {
     
     _tempo = tempo;
     
-    [[NSNotificationCenter defaultCenter] postNotificationName:DSMetronomeDidChangeTempoNotification
+    [[NSNotificationCenter defaultCenter] postNotificationName:SEMetronomeDidChangeTempoNotification
                                                         object:self
-                                                      userInfo:@{ DSNotificationTempoKey: @(tempo) }];
+                                                      userInfo:@{ SENotificationTempoKey: @(tempo) }];
 }
 
--(DSAudioEngineRenderCallback)renderCallback {
+-(SEAudioEngineRenderCallback)renderCallback {
     return render;
 }
 
-static void render(__unsafe_unretained DSMetronome * THIS, const AudioTimeStamp *time, AudioBufferList *ioData, UInt32 inNumberFrames) {
+static void render(__unsafe_unretained SEMetronome * THIS, const AudioTimeStamp *time, AudioBufferList *ioData, UInt32 inNumberFrames) {
     
     // Calculate relevant position, in beats at current tempo
     uint64_t timeBase = THIS->_timeBase;
@@ -183,10 +183,10 @@ static BOOL findBeatBoundary(double start, double end, double *outOffset, int *o
     }
 }
 
-static void addTone(__unsafe_unretained DSMetronome * THIS, double frequency, UInt32 duration, UInt32 offset) {
+static void addTone(__unsafe_unretained SEMetronome * THIS, double frequency, UInt32 duration, UInt32 offset) {
     for ( int i=0; i<kMaxTones; i++ ) {
         if ( !THIS->_tones[i].frequency ) {
-            THIS->_tones[i] = (DSMetronomeTone) {
+            THIS->_tones[i] = (SEMetronomeTone) {
                 .frequency = frequency,
                 .duration = duration,
                 .remainingFrames = duration,
@@ -197,7 +197,7 @@ static void addTone(__unsafe_unretained DSMetronome * THIS, double frequency, UI
     }
 }
 
-static void renderTone(DSMetronomeTone * tone, AudioBufferList *ioData, UInt32 inNumberFrames) {
+static void renderTone(SEMetronomeTone * tone, AudioBufferList *ioData, UInt32 inNumberFrames) {
     float oscillatorRate = tone->frequency / 44100.0;
     int i = 0;
     for ( ; tone->offset > 0; i++, tone->offset-- );
@@ -218,7 +218,7 @@ static void renderTone(DSMetronomeTone * tone, AudioBufferList *ioData, UInt32 i
     }
     
     if ( !tone->remainingFrames ) {
-        memset(tone, 0, sizeof(DSMetronomeTone));
+        memset(tone, 0, sizeof(SEMetronomeTone));
     }
 }
 

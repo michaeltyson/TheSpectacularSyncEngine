@@ -10,16 +10,16 @@
         <!--Main View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
-                <viewController id="BYZ-38-t0r" customClass="DSMainViewController" sceneMemberID="viewController">
+                <viewController id="BYZ-38-t0r" customClass="SEMainViewController" sceneMemberID="viewController">
                     <layoutGuides>
                         <viewControllerLayoutGuide type="top" id="y3c-jy-aDJ"/>
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC" customClass="DSBackgroundView">
+                    <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC" customClass="SEBackgroundView">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="StW-h4-bpb" customClass="DSTempoPulseView">
+                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="StW-h4-bpb" customClass="SETempoPulseView">
                                 <rect key="frame" x="150" y="149" width="300" height="300"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="120 BPM" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5kh-IQ-ISA">
@@ -93,7 +93,7 @@
                                     <segue destination="uqI-UU-OUa" kind="presentation" id="1Ts-Dg-gy7"/>
                                 </connections>
                             </button>
-                            <button opaque="NO" contentMode="scaleToFill" highlighted="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="iXu-pa-GgL" customClass="DSPlayPauseButton">
+                            <button opaque="NO" contentMode="scaleToFill" highlighted="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="iXu-pa-GgL" customClass="SEPlayPauseButton">
                                 <rect key="frame" x="252" y="539" width="95" height="95"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="95" id="71w-GA-bLd"/>

@@ -1,21 +1,21 @@
 //
-//  DSPlayPauseButton.m
+//  SEPlayPauseButton.m
 //  The Spectacular Sync Engine
 //
 //  Created by Michael Tyson on 7/01/2015.
 //  Copyright (c) 2015 A Tasty Pixel. All rights reserved.
 //
 
-#import "DSPlayPauseButton.h"
-#import "DSGraphics.h"
+#import "SEPlayPauseButton.h"
+#import "SEGraphics.h"
 
-@implementation DSPlayPauseButton
+@implementation SEPlayPauseButton
 
 -(void)drawRect:(CGRect)rect {
     if ( self.selected ) {
-        [DSGraphics drawPauseWithFrame:self.bounds];
+        [SEGraphics drawPauseWithFrame:self.bounds];
     } else {
-        [DSGraphics drawPlayWithFrame:self.bounds];
+        [SEGraphics drawPlayWithFrame:self.bounds];
     }
 }
 
