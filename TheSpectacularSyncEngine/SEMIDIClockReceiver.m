@@ -149,7 +149,8 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
               packet->data[0] == SEMIDIMessageClockStop ? @"Stop" :
               packet->data[0] == SEMIDIMessageContinue ? @"Continue" :
               packet->data[0] == SEMIDIMessageSongPosition ? @"Song Position" :
-              packet->data[0] == SEMIDIMessageClock ? @"Clock" : @"Other message");
+              packet->data[0] == SEMIDIMessageClock ? @"Clock" :
+              [NSString stringWithFormat:@"Other message (type %X)", (int)packet->data[0]]);
 #endif
         
         switch ( packet->data[0] ) {
