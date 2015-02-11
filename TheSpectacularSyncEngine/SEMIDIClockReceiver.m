@@ -221,7 +221,7 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                             THIS->_tickCount = 0;
                         } else {
                             // Continue from set song position
-                            THIS->_tickCount = THIS->_savedSongPosition;
+                            THIS->_tickCount = THIS->_savedSongPosition + 1;
                         }
                         THIS->_clockRunning = YES;
                         SESampleBufferClear(&THIS->_timeBaseSampleBuffer);
