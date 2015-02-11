@@ -187,7 +187,7 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                 }
                 
                 // Record new song position
-                THIS->_savedSongPosition = ((unsigned short)packet->data[2] << 7) | (unsigned short)packet->data[1];
+                THIS->_savedSongPosition = (((unsigned short)packet->data[2] << 7) | (unsigned short)packet->data[1]) * SEMIDITicksPerSongPositionBeat;
                 
                 if ( THIS->_timeBase ) {
                     // Currently running; prepare to do a live seek
@@ -221,7 +221,7 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                             THIS->_tickCount = 0;
                         } else {
                             // Continue from set song position
-                            THIS->_tickCount = THIS->_savedSongPosition * SEMIDITicksPerSongPositionBeat;
+                            THIS->_tickCount = THIS->_savedSongPosition;
                         }
                         THIS->_clockRunning = YES;
                         SESampleBufferClear(&THIS->_timeBaseSampleBuffer);
@@ -229,7 +229,7 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                     }
                     case SEActionSeek: {
                         // Continue from set song position
-                        THIS->_tickCount = THIS->_savedSongPosition * SEMIDITicksPerSongPositionBeat;
+                        THIS->_tickCount = THIS->_savedSongPosition;
                         SESampleBufferClear(&THIS->_timeBaseSampleBuffer);
                         break;
                     }
@@ -239,7 +239,7 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                             THIS->_tickCount++;
                             
                             // Remember last playback position
-                            THIS->_savedSongPosition = THIS->_tickCount / SEMIDITicksPerSongPositionBeat;
+                            THIS->_savedSongPosition = THIS->_tickCount;
                         }
                         break;
                     }
@@ -450,7 +450,7 @@ double SEMIDIClockReceiverGetTimelinePosition(__unsafe_unretained SEMIDIClockRec
 
     double position;
     if ( !timeBase || !tempo ) {
-        position = (double)savedSongPosition * ((double)SEMIDITicksPerSongPositionBeat / (double)SEMIDITicksPerBeat);
+        position = (double)savedSongPosition / (double)SEMIDITicksPerBeat;
     } else {
         position = time > timeBase ? SEHostTicksToBeats(time - timeBase, tempo) : 0;
     }

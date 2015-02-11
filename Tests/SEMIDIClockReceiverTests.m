@@ -239,8 +239,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     // Verify state change
     XCTAssertFalse(_receiver.clockRunning);
     XCTAssertTrue(_receiver.receivingTempo);
-    double midiBeatsPerBeat = (double)SEMIDITicksPerBeat / (double)SEMIDITicksPerSongPositionBeat;
-    double stoppedPosition = floor((newPosition + SEHostTicksToBeats(time - newPositionChangeTime, tempo)) * midiBeatsPerBeat) / midiBeatsPerBeat;
+    double stoppedPosition = floor((newPosition + SEHostTicksToBeats(time - newPositionChangeTime, tempo)) * 24) / 24;
     XCTAssertEqual([_receiver timelinePositionForTime:time], stoppedPosition);
     XCTAssertEqual([_receiver timelinePositionForTime:time + SEBeatsToHostTicks(1, tempo)], stoppedPosition);
     
