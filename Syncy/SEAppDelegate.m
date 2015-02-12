@@ -46,6 +46,7 @@
     
     self.senderInterface = [[SEMIDIClockSenderCoreMIDIInterface alloc] init];
     self.sender = [[SEMIDIClockSender alloc] initWithInterface:_senderInterface];
+    self.sender.sendClockTicksWhileTimelineStopped = YES;
     
     self.metronome = [SEMetronome new];
     

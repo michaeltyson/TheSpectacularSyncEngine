@@ -27,11 +27,16 @@ extern "C" {
  *  used to send outgoing messages. Then provide a tempo via the tempo property, and 
  *  call startAtTime: to start the clock and begin advancing the timeline.
  *
+ *  Optionally, but to achieve the best user experience, use the suggested 'apply
+ *  time' timestamps returned from startAtTime: and setActiveTimelinePosition:atTime:
+ *  and set the sendClockTicksWhileTimelineStopped property to YES. This will enable
+ *  this class to send clock ticks prior to starting the timeline, which allows
+ *  supporting receivers to sync to the local tempo well in advance of timeline start.
+ *  This avoids tempo adjustments that are audible.
+ *
  *  Note that, due to the general lack of acceptable support for Song Position and
  *  Continue messages in apps and some hardware, use of the timeline position facilities
  *  of this class may have no effect in receivers with a limited implementation.
- *  Furthermore, for related technical reasons this class will only send clock ticks
- *  when the clock is started.
  */
 @interface SEMIDIClockSender : NSObject
 
@@ -50,17 +55,22 @@ extern "C" {
  *  The clock will be started. Make sure you have provided a tempo first, via the
  *  tempo property.
  *
- *  Pass a timestamp at which to apply the start, to achieve the best sync.
- *
  *  If you are starting the clock anywhere but the beginning of your app's timeline,
  *  be sure to first assign a value to the timelinePosition property to cue playback
  *  position. Note that due to generally poor support of Song Position/Continue in
  *  receivers, this may have no effect, however.
  *
+ *  Optionally, but to achieve the best user experience, use the suggested 'apply
+ *  time' timestamps returned from this method and set the sendClockTicksWhileTimelineStopped
+ *  property to YES. This will enable this class to send clock ticks prior to starting
+ *  the timeline, which allows supporting receivers to sync to the local tempo well 
+ *  in advance of timeline start. This avoids tempo adjustments that are audible.
+ *
  * @param applyTime The global timestamp at which to start the clock, in host ticks,
  *      or zero. See mach_absolute_time, or SECurrentTimeInHostTicks
- * @return The timestamp at which the start will occur. If you passed zero for applyTime,
- *      your app should wait until this time before starting the local clock.
+ * @return The timestamp at which the start will occur. If you have set the
+ *      sendClockTicksWhileTimelineStopped property to YES, your app must wait until
+ *      this time before starting the local clock.
  */
 -(uint64_t)startAtTime:(uint64_t)applyTime;
 
@@ -88,18 +98,9 @@ extern "C" {
  *  Note that due to generally poor support of Song Position/Continue in receivers, this may
  *  have no effect.
  *
- *  It is recommended that you limit resolution to 16th notes (0.25). If you do so, and
- *  you provide a zero apply timestamp (recommended), then this method will automatically
- *  pick the soonest apply time that will result in a safe on-the-beat transition to the new
- *  position (within 1/24th of a beat).
- *
- *  Otherwise, specify an apply time in host ticks in order to precisely specify the global
- *  timestamp that corresponds to this timeline position change. The sender instance will 
- *  update the remote clock's position and offset the outgoing ticks to synchronize the change,
- *  but note that some short-term sync discrepancy may be experienced.
- *
- *  This method returns the apply time that you provided, or the one automatically determined.
- *  Your app should wait to update the timeline in your own app until this apply time is reached.
+ *  Optionally, but to achieve the best user experience, use the suggested 'apply
+ *  time' timestamps returned from this method and set the sendClockTicksWhileTimelineStopped
+ *  property to YES.
  *
  *  If the clock is not running when you call this method, it behaves identically to the
  *  assignment of the timelinePosition property.
@@ -108,8 +109,9 @@ extern "C" {
  *      notes - use SESecondsToBeats to convert from seconds, if necessary)
  * @param applyTime The global timestamp at which to apply the timeline change, in host ticks
  *      or zero (recommended). See mach_absolute_time, or SECurrentTimeInHostTicks
- * @return The timestamp at which the position change will occur. Your app should wait until this
- *      time before changing the timeline position.
+ * @return The timestamp at which the position change will occur. If you have set the
+ *      sendClockTicksWhileTimelineStopped property to YES, your app must wait until
+ *      this time before seeking in the local timeline.
  */
 -(uint64_t)setActiveTimelinePosition:(double)timelinePosition atTime:(uint64_t)applyTime;
 
@@ -162,6 +164,24 @@ extern "C" {
  * Whether the clock has been started (read-only, key-value observable)
  */
 @property (nonatomic, readonly) BOOL started;
+
+/*!
+ * Whether to send clock ticks while timeline is stopped (default: NO)
+ *
+ *  If you take particular care to apply start/seek actions at the apply
+ *  timestamps provided by this class's startAtTime: and 
+ *  setActiveTimelinePosition:atTime: methods, you may choose to set this
+ *  property to YES to enable this class to send clock ticks while your
+ *  timeline is stopped.
+ *
+ *  This allows receivers to sync to your app's tempo well in advance of a
+ *  timeline start, for a smoother user experience.
+ *
+ *  Important note: If you are not taking steps to use this class's
+ *  suggested apply timestamps, setting this property to YES will cause
+ *  synchronisation discrepancies. Use with caution.
+ */
+@property (nonatomic) BOOL sendClockTicksWhileTimelineStopped;
 
 /*!
  * The interface, passed during initialisation

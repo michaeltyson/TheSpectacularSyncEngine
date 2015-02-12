@@ -45,11 +45,12 @@ static const double kTempoDragVelocity = 0.15;
     
     self.tempoDragGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(tempoDrag:)];
     [_tempoPulseView addGestureRecognizer:_tempoDragGestureRecognizer];
+    
+    _sender.tempo = _metronome.tempo;
 }
 
 -(IBAction)togglePlayPause:(id)sender {
     if ( !_metronome.started ) {
-        _sender.tempo = _metronome.tempo;
         uint64_t startTime = [_sender startAtTime:0];
         [_metronome startAtTime:startTime];
     } else {

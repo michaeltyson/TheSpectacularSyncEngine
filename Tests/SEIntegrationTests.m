@@ -30,6 +30,7 @@
     
     self.interface = [SEMIDIClockSenderPassthroughInterface new];
     self.sender = [[SEMIDIClockSender alloc] initWithInterface:_interface];
+    _sender.sendClockTicksWhileTimelineStopped = YES;
     self.receiver = [SEMIDIClockReceiver new];
     _interface.receiver = _receiver;
     

@@ -15,12 +15,6 @@ static const NSTimeInterval kTickResyncThreshold            = 1.0e-6; // If tick
 static const double kThreadPriority                         = 0.8;    // Priority of the sender thread
 static const int kMaxPendingMessages                        = 10;     // Size of pending message buffer
 
-// #define SUPPORT_TEMPO_TICKS_OUTSIDE_TIMELINE // Uncomment to enable sending tempo ticks when clock is stopped
-
-#if defined(TEST_RIG_BUILD) && !defined(SUPPORT_TEMPO_TICKS_OUTSIDE_TIMELINE)
-#define SUPPORT_TEMPO_TICKS_OUTSIDE_TIMELINE
-#endif
-
 @interface SEMIDIClockSenderThread : NSThread
 @property (nonatomic, weak) SEMIDIClockSender * sender;
 @end
@@ -77,13 +71,11 @@ static const int kMaxPendingMessages                        = 10;     // Size of
         self.started = NO;
     }
     
-#ifndef SUPPORT_TEMPO_TICKS_OUTSIDE_TIMELINE
-    if ( _thread ) {
+    if ( !_sendClockTicksWhileTimelineStopped && _thread ) {
         // Stop the thread
         [_thread cancel];
         self.thread = nil;
     }
-#endif
 }
 
 -(uint64_t)setActiveTimelinePosition:(double)timelinePosition atTime:(uint64_t)applyTime {
@@ -135,16 +127,16 @@ static const int kMaxPendingMessages                        = 10;     // Size of
         _tempo = tempo;
     }
     
-#ifdef SUPPORT_TEMPO_TICKS_OUTSIDE_TIMELINE
-    if ( tempo != 0.0 && !_thread ) {
-        // Start the thread which will send out the ticks - in a moment, in case clock is started next
-        [self performSelector:@selector(startThread) withObject:nil afterDelay:0.0];
-    } else if ( tempo == 0.0 && _thread ) {
-        // Stop the thread
-        [_thread cancel];
-        self.thread = nil;
+    if ( _sendClockTicksWhileTimelineStopped ) {
+        if ( tempo != 0.0 && !_thread ) {
+            // Start the thread which will send out the ticks - in a moment, in case clock is started next
+            [self performSelector:@selector(startThread) withObject:nil afterDelay:0.0];
+        } else if ( tempo == 0.0 && _thread ) {
+            // Stop the thread
+            [_thread cancel];
+            self.thread = nil;
+        }
     }
-#endif
 }
 
 -(uint64_t)startOrSeekWithPosition:(double)timelinePosition atTime:(uint64_t)applyTime startClock:(BOOL)start {
@@ -152,6 +144,7 @@ static const int kMaxPendingMessages                        = 10;     // Size of
         uint64_t tickDuration = SESecondsToHostTicks((60.0 / _tempo) / SEMIDITicksPerBeat);
         uint64_t MIDIBeatDuration = tickDuration * SEMIDITicksPerSongPositionBeat;
         double beatsToMIDIBeats = (double)SEMIDITicksPerBeat / (double)SEMIDITicksPerSongPositionBeat;
+        uint64_t beatSyncThreshold = SESecondsToHostTicks(kFirstBeatSyncThreshold);
         
         if ( !_started && !start ) {
             // Cue this position for when we start
@@ -170,6 +163,16 @@ static const int kMaxPendingMessages                        = 10;     // Size of
             // We've been left to choose an apply time ourselves: choose the next tick time,
             // to give us the best chance of a smooth transition.
             applyTime = _nextTickTime ? _nextTickTime : SECurrentTimeInHostTicks();
+        } else if ( _nextTickTime ) {
+            // Find the next tick time after the given apply time
+            if ( applyTime < _nextTickTime ) {
+                applyTime = _nextTickTime;
+            } else {
+                uint64_t modulus = (applyTime - _nextTickTime) % tickDuration;
+                if ( modulus > beatSyncThreshold && (tickDuration - modulus) > beatSyncThreshold ) {
+                    applyTime += tickDuration - modulus;
+                }
+            }
         }
         
         // Calculate time base, and determine relative position in host ticks
@@ -188,8 +191,7 @@ static const int kMaxPendingMessages                        = 10;     // Size of
         uint64_t timeUntilNextMIDIBeat = 0;
         uint64_t position = applyTime - timeBase;
         uint64_t modulus = position % MIDIBeatDuration;
-        uint64_t threshold = SESecondsToHostTicks(kFirstBeatSyncThreshold);
-        if ( modulus > threshold && MIDIBeatDuration - modulus > threshold ) {
+        if ( modulus > beatSyncThreshold && MIDIBeatDuration - modulus > beatSyncThreshold ) {
             timeUntilNextMIDIBeat = MIDIBeatDuration - modulus;
         }
         

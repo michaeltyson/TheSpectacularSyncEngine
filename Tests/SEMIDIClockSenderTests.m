@@ -28,6 +28,7 @@
     
     SEMIDIClockSenderTestInterface * interface = [SEMIDIClockSenderTestInterface new];
     SEMIDIClockSender * sender = [[SEMIDIClockSender alloc] initWithInterface:interface];
+    sender.sendClockTicksWhileTimelineStopped = YES;
     
     sender.tempo = tempo;
     
@@ -177,6 +178,7 @@
     
     SEMIDIClockSenderTestInterface * interface = [SEMIDIClockSenderTestInterface new];
     SEMIDIClockSender * sender = [[SEMIDIClockSender alloc] initWithInterface:interface];
+    sender.sendClockTicksWhileTimelineStopped = YES;
     
     sender.tempo = tempo;
     
@@ -243,6 +245,7 @@
     
     SEMIDIClockSenderTestInterface * interface = [SEMIDIClockSenderTestInterface new];
     SEMIDIClockSender * sender = [[SEMIDIClockSender alloc] initWithInterface:interface];
+    sender.sendClockTicksWhileTimelineStopped = YES;
     
     sender.tempo = firstTempo;
     
@@ -329,6 +332,7 @@
     
     SEMIDIClockSenderTestInterface * interface = [SEMIDIClockSenderTestInterface new];
     SEMIDIClockSender * sender = [[SEMIDIClockSender alloc] initWithInterface:interface];
+    sender.sendClockTicksWhileTimelineStopped = YES;
     sender.tempo = tempo;
     
     // Run for a little while
