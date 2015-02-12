@@ -666,7 +666,10 @@ static void SESampleBufferIntegrateSample(SESampleBuffer *buffer, uint64_t sampl
         _SESampleBufferAddSampleToBuffer(buffer, sample);
         
         if ( buffer->outlierCount != 0 ) {
-            // Ignore any outliers we saw
+            // Integrate any outliers we saw
+            for ( int i=0; i<buffer->outlierCount; i++ ) {
+                _SESampleBufferAddSampleToBuffer(buffer, buffer->outliers[i]);
+            }
             buffer->outlierCount = 0;
         }
     }
