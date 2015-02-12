@@ -171,7 +171,7 @@
     XCTAssertEqual((SEMIDIMessage)packetList->packet[0].data[0], SEMIDIMessageClockStop);
 }
 
--(void)testSpontaneousStart {
+-(void)testStartWithCustomTimestamp {
     double tempo = 125.0; // Works out at one MIDI tick per 0.2 seconds
     uint64_t tickDuration = SESecondsToHostTicks((60.0 / tempo) / SEMIDITicksPerBeat);
     
@@ -185,7 +185,7 @@
     [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:firstRunInterval]];
     
     // Start
-    uint64_t startTime = SECurrentTimeInHostTicks();
+    uint64_t startTime = SECurrentTimeInHostTicks() + 0.1;
     startTime = [sender startAtTime:startTime];
     
     // Run for a short time
@@ -214,17 +214,9 @@
     
     XCTAssertEqualWithAccuracy(i, SESecondsToHostTicks(firstRunInterval) / tickDuration, 10);
     
-    // Make sure we got a song position (for 1 MIDI beat)
-    const MIDIPacketList *packetList = [interface.sentMessages[i] bytes];
-    XCTAssertEqual(packetList->packet[0].data[0], SEMIDIMessageSongPosition);
-    int beats = ((unsigned short)packetList->packet[0].data[2] << 7) | (unsigned short)packetList->packet[0].data[1];
-    XCTAssertEqual(beats, 1);
-    XCTAssertEqual(packetList->packet[0].timeStamp, startTime - 1);
-    i++;
-    
-    // Make sure we got continue
-    packetList = [interface.sentMessages[i] bytes];
-    XCTAssertEqual(packetList->packet[0].data[0], SEMIDIMessageContinue);
+    // Make sure we got start
+    const MIDIPacketList * packetList = [interface.sentMessages[i] bytes];
+    XCTAssertEqual(packetList->packet[0].data[0], SEMIDIMessageClockStart);
     XCTAssertEqual(packetList->packet[0].timeStamp, startTime - 1);
     i++;
     

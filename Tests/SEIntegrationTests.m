@@ -103,40 +103,6 @@
     XCTAssertEqual(_receiver.error, 0);
 }
 
-- (void)testSpontaneousStart {
-    _sender.tempo = 125;
-    
-    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1.0]];
-    
-    XCTAssertTrue(_receiver.receivingTempo);
-    XCTAssertEqual(_receiver.tempo, _sender.tempo);
-    XCTAssertFalse(_receiver.clockRunning);
-    XCTAssertEqual([_receiver timelinePositionForTime:SECurrentTimeInHostTicks()], 0);
-    XCTAssertEqual(_observer.observations.count, 2);
-    XCTAssertEqualObjects(_observer.observations[0], @"receivingTempo");
-    XCTAssertEqualObjects(_observer.observations[1], @"tempo");
-    XCTAssertEqual(_observer.notifications.count, 2);
-    XCTAssertEqualObjects(((NSNotification*)_observer.notifications[0]).name, SEMIDIClockReceiverDidStartTempoSyncNotification);
-    XCTAssertEqualObjects(((NSNotification*)_observer.notifications[1]).name, SEMIDIClockReceiverDidChangeTempoNotification);
-    XCTAssertEqual([((NSNotification*)_observer.notifications[1]).userInfo[SEMIDIClockReceiverTempoKey] doubleValue], _sender.tempo);
-    [_observer reset];
-    
-    uint64_t startTime = SECurrentTimeInHostTicks();
-    [_sender startAtTime:startTime];
-    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1.0]];
-    
-    XCTAssertTrue(_receiver.clockRunning);
-    XCTAssertEqualWithAccuracy([_receiver timelinePositionForTime:startTime], 0, SESecondsToHostTicks(1.0e-6));
-    XCTAssertEqual(_observer.observations.count, 1);
-    XCTAssertEqualObjects(_observer.observations[0], @"clockRunning");
-    XCTAssertEqual(_observer.notifications.count, 1);
-    XCTAssertEqualObjects(((NSNotification*)_observer.notifications[0]).name, SEMIDIClockReceiverDidStartNotification);
-    [_observer reset];
-    
-    XCTAssertEqual(_receiver.error, 0);
-
-}
-
 - (void)testStartWithoutPrecedingTempoTicks {
     uint64_t startTime = SECurrentTimeInHostTicks();
     _sender.tempo = 125;
@@ -170,28 +136,6 @@
     
     XCTAssertTrue(_receiver.clockRunning);
     XCTAssertEqualWithAccuracy([_receiver timelinePositionForTime:startTime], initialTimelinePosition, SESecondsToHostTicks(1.0e-6));
-    
-    XCTAssertEqual(_receiver.error, 0);
-}
-
-- (void)testSpontaneousIrregularSeek {
-    _sender.tempo = 125;
-    uint64_t startTime = SECurrentTimeInHostTicks();
-    [_sender startAtTime:startTime];
-    
-    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1.0]];
-    
-    XCTAssertTrue(_receiver.clockRunning);
-    XCTAssertEqualWithAccuracy([_receiver timelinePositionForTime:startTime], 0, SESecondsToHostTicks(1.0e-6));
-    
-    uint64_t seekTime = SECurrentTimeInHostTicks();
-    double seekPosition = 22.38;
-    
-    [_sender setActiveTimelinePosition:seekPosition atTime:seekTime];
-    
-    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:1.0]];
-    
-    XCTAssertEqualWithAccuracy([_receiver timelinePositionForTime:seekTime], seekPosition, SESecondsToHostTicks(1.0e-6));
     
     XCTAssertEqual(_receiver.error, 0);
 }
