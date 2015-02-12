@@ -47,12 +47,6 @@ static const double kTempoDragVelocity = 0.15;
     [_tempoPulseView addGestureRecognizer:_tempoDragGestureRecognizer];
 }
 
--(IBAction)showSources:(id)sender {
-}
-
--(IBAction)showDestinations:(id)sender {
-}
-
 -(IBAction)togglePlayPause:(id)sender {
     if ( !_metronome.started ) {
         _sender.tempo = _metronome.tempo;

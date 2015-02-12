@@ -16,8 +16,6 @@
 
 @interface SEMainViewController : UIViewController
 
--(IBAction)showSources:(id)sender;
--(IBAction)showDestinations:(id)sender;
 -(IBAction)togglePlayPause:(id)sender;
 -(IBAction)forward:(id)sender;
 -(IBAction)backward:(id)sender;
