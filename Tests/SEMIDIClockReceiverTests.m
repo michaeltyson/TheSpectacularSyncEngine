@@ -350,7 +350,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     
     // Send some ticks, for 125 bpm
     double tempo = 125.0;
-    int tickCount = 48;
+    int tickCount = 96;
     uint64_t tickDuration = SESecondsToHostTicks((60.0 / tempo) / SEMIDITicksPerBeat);
     uint64_t time = SECurrentTimeInHostTicks();
     for ( int i=0; i<tickCount; i++, time += tickDuration ) {
@@ -398,7 +398,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     
     // Send some ticks, for 125 bpm, with random delays
     double tempo = 125.0;
-    int tickCount = 24;
+    int tickCount = 48;
     uint64_t tickDuration = SESecondsToHostTicks((60.0 / tempo) / SEMIDITicksPerBeat);
     TPMCGaussianRandom gauss;
     TPMCGaussianRandomInit(&gauss, 0, tickDuration * (standardDeviationPercent / 100.0), 0, DBL_MAX);
@@ -431,7 +431,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     
     // Change tempo
     tempo = 160;
-    tickCount = 16;
+    tickCount = 48;
     tickDuration = SESecondsToHostTicks((60.0 / tempo) / SEMIDITicksPerBeat);
     TPMCGaussianRandomInit(&gauss, 0, tickDuration * (standardDeviationPercent / 100.0), 0, DBL_MAX);
     for ( int i=0; i<tickCount; i++, time += tickDuration ) {
@@ -514,6 +514,63 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     [_observer reset];
 }
 
+-(void)testVeryHighJitterTolerance {
+    double standardDeviationPercent = 30.0;
+    
+    uint64_t time = SECurrentTimeInHostTicks();
+    char packetListSpace[sizeof(MIDIPacketList) + sizeof(MIDIPacket)];
+    MIDIPacketList *packetList = (MIDIPacketList*)packetListSpace;
+    
+    
+    // Send some ticks, for 125 bpm, with random delays
+    double tempo = 125;
+    int tickCount = 96;
+    uint64_t tickDuration = SESecondsToHostTicks((60.0 / tempo) / SEMIDITicksPerBeat);
+    TPMCGaussianRandom gauss;
+    TPMCGaussianRandomInit(&gauss, 0, tickDuration * (standardDeviationPercent / 100.0), 0, DBL_MAX);
+    for ( int i=0; i<tickCount; i++, time += tickDuration ) {
+        MIDIPacket *packet = MIDIPacketListInit(packetList);
+        Byte tickMessage[] = { SEMIDIMessageClock };
+        packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time + TPMCGaussianRandomNext(&gauss), sizeof(tickMessage), tickMessage);
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
+    }
+    
+    // Verify convergence with not too many early tempo updates
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+    XCTAssertLessThanOrEqual(_observer.notifications.count, 3);
+    [_observer reset];
+    
+    // Send more ticks (fill sample buffer)
+    tickCount = 576-tickCount;
+    for ( int i=0; i<tickCount; i++, time += tickDuration ) {
+        MIDIPacket *packet = MIDIPacketListInit(packetList);
+        Byte tickMessage[] = { SEMIDIMessageClock };
+        packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time + TPMCGaussianRandomNext(&gauss), sizeof(tickMessage), tickMessage);
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
+    }
+    
+    // Collect and clear notifications
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+    [_observer reset];
+    
+    // Send more ticks (should now be stable)
+    tickCount = 576;
+    for ( int i=0; i<tickCount; i++, time += tickDuration ) {
+        MIDIPacket *packet = MIDIPacketListInit(packetList);
+        Byte tickMessage[] = { SEMIDIMessageClock };
+        packet = MIDIPacketListAdd(packetList, sizeof(packetListSpace), packet, time + TPMCGaussianRandomNext(&gauss), sizeof(tickMessage), tickMessage);
+        SEMIDIClockReceiverReceivePacketList(_receiver, packetList);
+    }
+    
+    // Verify tempo
+    XCTAssertEqualWithAccuracy(_receiver.tempo, tempo, 1.0e-9);
+    
+    // Verify no tempo updates
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.1]];
+    XCTAssertEqual(_observer.notifications.count, 0);
+    [_observer reset];
+}
+
 -(void)testJitterTimelineTolerance {
     double standardDeviationPercent = 4.0;
     
@@ -523,7 +580,7 @@ static double TPMCGaussianRandomNext(TPMCGaussianRandom * gaussianRandom) {
     
     // Send some ticks, for 125 bpm, with random delays
     double tempo = 125.0;
-    int tickCount = 24;
+    int tickCount = 48;
     uint64_t tickDuration = SESecondsToHostTicks((60.0 / tempo) / SEMIDITicksPerBeat);
     TPMCGaussianRandom gauss;
     TPMCGaussianRandomInit(&gauss, 0, tickDuration * (standardDeviationPercent / 100.0), 0, DBL_MAX);

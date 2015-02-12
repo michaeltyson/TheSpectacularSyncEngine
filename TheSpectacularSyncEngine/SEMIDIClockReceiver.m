@@ -28,15 +28,16 @@ NSString * const SEMIDIClockReceiverTempoKey = @"tempo";
 static const NSTimeInterval kIdlePollInterval        = 0.1;    // How often to poll on the main thread for events, while idle
 static const NSTimeInterval kActivePollInterval      = 0.05;   // How often to poll on the main thread for events, while actively receiving
 static const int kEventBufferSize                    = 10;     // Size of event buffer, used to notify main thread about events
-static const int kSampleBufferSize                   = 96;     // Number of samples to keep at a time. A higher value runs the risk of a longer
+static const int kSampleBufferSize                   = 384;    // Number of samples to keep at a time. A higher value runs the risk of a longer
                                                                // time to converge to new values; a lower value runs the risk of not converging to
                                                                // constant values.
 static double kTempoChangeUpdateThreshold            = 1.0e-4; // Only issue tempo updates when change is greater than this
-static const int kMinSamplesBeforeReportingTempo     = 15;     // Don't report tempo if we've seen less than this number of samples (unless clock running)
-static const int kMinSamplesBetweenTempoUpdates      = 24;     // Don't issue a tempo update when within this number of samples of the last one
+static const int kMinContiguousSamplesBeforeReportingTempo = 15;// Don't report tempo if we've seen less than this number of identical samples (unless clock running)
+static const double kForcedTempoChangeThreshold  = 3.0;        // Change in tempo (in BPM) before triggering a forced tempo update
+static const int kSamplesBeforeForcedTempoChange = 384;        // If we haven't seen any significant changes in this time, and we haven't reported a tempo change, report
 static const int kMinSamplesBeforeEvaluatingOutliers = 10;     // Min samples to observe before we can start identifying outlier samples
 static const int kMinSamplesBeforeTrustingZeroStdDev = 3;      // Min samples to observe before we trust a zero standard deviation
-static const double kOutlierThresholdRatio           = 3.5;    // Number of standard deviations beyond which we consider a sample an outlier
+static const double kOutlierThresholdRatio           = 3.0;    // Number of standard deviations beyond which we consider a sample an outlier
                                                                // A lower value lets us converge quickly to closer new values, but runs the risk of
                                                                // excluding useful samples in the presence of high jitter, causing convergence issues
 static const NSTimeInterval kMinimumEarlyOutlierThreshold = 1.0e-3; // Minimum threshold beyond which we consider a sample an outlier, if we've seen less
@@ -97,6 +98,8 @@ typedef struct {
     uint64_t _primedActionTimestamp;
     int _savedSongPosition;
     int _sampleCountSinceLastTempoUpdate;
+    double _newProposedTempoValue;
+    int _contiguousSampleCount;
     SESampleBuffer _tickSampleBuffer;
     SESampleBuffer _timeBaseSampleBuffer;
     double _error;
@@ -296,46 +299,50 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                     
                     // We trust this source - just round to avoid minor floating-point errors
                     roundingCoefficient = 0;
-                } else {
+                } else if ( samplesSinceChange >= kMinSamplesBeforeRecordingTempoHistory ) {
                     
                     // Untrusted source
-                    if ( samplesSinceChange >= kMinSamplesBeforeReportingTempo ) {
-                        // Only check history if we've got enough samples
-                        roundingCoefficient = 0;
-                        for ( ; roundingCoefficient < (sizeof(kRoundingCoefficients)/sizeof(double))-1; roundingCoefficient++ ) {
-                            // For each rounding coefficient (starting small), compare the rounded tempo entries with each other.
-                            // If, for a given rounding coefficient, the rounded tempo entries all match, then we'll round using this coefficient.
-                            BOOL acceptableRounding = YES;
-                            double comparisonValue = 0.0;
-                            for ( int i=0; i<kTempoHistoryLength; i++ ) {
-                                if ( THIS->_tempoHistory[i].max == 0.0 ) continue;
-                                
-                                if ( comparisonValue == 0.0 ) {
-                                    // Use the first value we come to for comparison
-                                    comparisonValue = round(THIS->_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
-                                }
-                                
-                                // Compare the value bounds for this entry against our comparison value
-                                double roundedMaxValue = round(THIS->_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
-                                double roundedMinValue = round(THIS->_tempoHistory[i].min / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
-                                
-                                if ( fabs(roundedMaxValue - comparisonValue) > 1.0e-5 || fabs(roundedMinValue - comparisonValue) > 1.0e-5 ) {
-                                    // This rounding coefficient doesn't give us a stable result - move on
-                                    acceptableRounding = NO;
-                                    break;
-                                }
+                    roundingCoefficient = 0;
+                    for ( ; roundingCoefficient < (sizeof(kRoundingCoefficients)/sizeof(double))-1; roundingCoefficient++ ) {
+                        // For each rounding coefficient (starting small), compare the rounded tempo entries with each other.
+                        // If, for a given rounding coefficient, the rounded tempo entries all match, then we'll round using this coefficient.
+                        BOOL acceptableRounding = YES;
+                        double comparisonValue = 0.0;
+                        for ( int i=0; i<kTempoHistoryLength; i++ ) {
+                            if ( THIS->_tempoHistory[i].max == 0.0 ) continue;
+                            
+                            if ( comparisonValue == 0.0 ) {
+                                // Use the first value we come to for comparison
+                                comparisonValue = round(THIS->_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
                             }
                             
-                            if ( acceptableRounding ) {
+                            // Compare the value bounds for this entry against our comparison value
+                            double roundedMaxValue = round(THIS->_tempoHistory[i].max / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                            double roundedMinValue = round(THIS->_tempoHistory[i].min / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                            
+                            if ( fabs(roundedMaxValue - comparisonValue) > 1.0e-5 || fabs(roundedMinValue - comparisonValue) > 1.0e-5 ) {
+                                // This rounding coefficient doesn't give us a stable result - move on
+                                acceptableRounding = NO;
                                 break;
                             }
                         }
                         
+                        if ( acceptableRounding ) {
+                            break;
+                        }
                     }
                 }
                 
                 // Apply rounding
                 tempo = round(tempo / kRoundingCoefficients[roundingCoefficient]) * kRoundingCoefficients[roundingCoefficient];
+                
+                // Make note of relation to previously observed samples, to gauge stability
+                if ( fabs(tempo - THIS->_newProposedTempoValue) < kTempoChangeUpdateThreshold ) {
+                    THIS->_contiguousSampleCount++;
+                } else {
+                    THIS->_newProposedTempoValue = tempo;
+                    THIS->_contiguousSampleCount = 1;
+                }
                 
                 THIS->_sampleCountSinceLastTempoUpdate++;
                 
@@ -343,17 +350,23 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                     // A significant tempo change happened. Report it (with rate limiting)
                     BOOL reportUpdate = NO;
                     
-                    if ( relativeStandardDeviation <= kTrustedStandardDeviation
+                    if ( !THIS->_tempo && THIS->_clockRunning ) {
+                        // If our clock's running and we don't have a tempo yet, report it right now
+                        reportUpdate = YES;
+                    
+                    } else if ( relativeStandardDeviation <= kTrustedStandardDeviation
                             && SESampleBufferSamplesSeen(&THIS->_tickSampleBuffer) > kMinSamplesBeforeTrustingZeroStdDev ) {
                         // Trust the source - it's very accurate - so report any change immediately
                         reportUpdate = YES;
                         
-                    } else if ( (!THIS->_tempo && THIS->_clockRunning) || samplesSinceChange == kMinSamplesBeforeReportingTempo ) {
-                        // Report when tempo is needed but absent, or shortly after we've seen a significant change
+                    } else if ( THIS->_contiguousSampleCount >= kMinContiguousSamplesBeforeReportingTempo ) {
+                        // Report when we've seen a number of consistent values
                         reportUpdate = YES;
                         
-                    } else if ( THIS->_sampleCountSinceLastTempoUpdate > kMinSamplesBetweenTempoUpdates && samplesSinceChange >= kMinSamplesBeforeReportingTempo ) {
-                        // Report every so often
+                    } else if ( fabs(THIS->_tempo - tempo) >= kForcedTempoChangeThreshold
+                            && THIS->_sampleCountSinceLastTempoUpdate > kSamplesBeforeForcedTempoChange
+                            && samplesSinceChange > kSamplesBeforeForcedTempoChange ) {
+                        // Report when we've a significant tempo change, and it's been a long time since we reported anything
                         reportUpdate = YES;
                     }
                     
