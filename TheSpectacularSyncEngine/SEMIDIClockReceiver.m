@@ -250,6 +250,11 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                     THIS->_tickCount++;
                 }
                 
+                // Make sure interval is valid
+                if ( timestamp < previousTick ) {
+                    continue;
+                }
+                
                 // Determine interval since last tick, and calculate corresponding tempo
                 uint64_t interval = timestamp - previousTick;
                 
