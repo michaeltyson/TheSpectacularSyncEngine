@@ -257,13 +257,13 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                 SESampleBufferIntegrateSample(&THIS->_tickSampleBuffer, interval);
                 int samplesSinceChange = SESampleBufferSamplesSinceLastSignificantChange(&THIS->_tickSampleBuffer);
                 
-                // Determine source's relative standard deviation
-                double relativeStandardDeviation = ((double)SESampleBufferStandardDeviation(&THIS->_tickSampleBuffer) / (double)interval) * 100.0;
-                THIS->_error = relativeStandardDeviation;
-                
                 // Calculate true interval from samples, and convert to tempo
                 interval = SESampleBufferCalculatedValue(&THIS->_tickSampleBuffer);
                 double tempo = (double)SESecondsToHostTicks(60.0) / (double)(interval * SEMIDITicksPerBeat);
+                
+                // Determine source's relative standard deviation
+                double relativeStandardDeviation = ((double)SESampleBufferStandardDeviation(&THIS->_tickSampleBuffer) / (double)interval) * 100.0;
+                THIS->_error = relativeStandardDeviation;
                 
                 // Update tempo history
                 if ( SESampleBufferSignificantChangeHappened(&THIS->_tickSampleBuffer) ) {
