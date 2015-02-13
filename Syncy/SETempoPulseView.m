@@ -16,7 +16,7 @@ static NSString * const kAnimationName = @"animation";
     uint64_t _timeBase;
 }
 @property (nonatomic) CALayer * animationLayer;
-@property (nonatomic) CABasicAnimation * animation;
+@property (nonatomic) CADisplayLink * displayLink;
 @end
 
 @implementation SETempoPulseView
@@ -38,7 +38,9 @@ static NSString * const kAnimationName = @"animation";
 }
 
 -(void)dealloc {
-    self.metronome = nil;
+    if ( _displayLink ) {
+        [_displayLink invalidate];
+    }
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
@@ -50,7 +52,7 @@ static NSString * const kAnimationName = @"animation";
 -(void)tintColorDidChange {
     _animationLayer.borderColor = self.tintColor.CGColor;
     if ( _indeterminate ) {
-        [self setupAnimation];
+        [self updateAnimationStatus];
     }
 }
 
@@ -65,16 +67,19 @@ static NSString * const kAnimationName = @"animation";
     [self.layer addSublayer:_animationLayer];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillEnterForeground:) name:UIApplicationWillEnterForegroundNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationDidEnterBackground:) name:UIApplicationDidEnterBackgroundNotification object:nil];
 }
 
 -(void)applicationWillEnterForeground:(NSNotification*)notification {
-    [self setupAnimation];
+    [self updateAnimationStatus];
+}
+
+-(void)applicationDidEnterBackground:(NSNotification*)notification {
+    [self updateAnimationStatus];
 }
 
 -(void)setMetronome:(SEMetronome *)metronome {
     if ( _metronome ) {
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:SEMetronomeDidChangeTempoNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] removeObserver:self name:SEMetronomeDidChangeTimelineNotification object:_metronome];
         [[NSNotificationCenter defaultCenter] removeObserver:self name:SEMetronomeDidStartNotification object:_metronome];
         [[NSNotificationCenter defaultCenter] removeObserver:self name:SEMetronomeDidStopNotification object:_metronome];
     }
@@ -82,12 +87,10 @@ static NSString * const kAnimationName = @"animation";
     _metronome = metronome;
     
     if (_metronome ) {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:SEMetronomeDidChangeTempoNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:SEMetronomeDidChangeTimelineNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:SEMetronomeDidStartNotification object:_metronome];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(stateChanged:) name:SEMetronomeDidStopNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(clockStartedOrStopped) name:SEMetronomeDidStartNotification object:_metronome];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(clockStartedOrStopped) name:SEMetronomeDidStopNotification object:_metronome];
         
-        [self setupAnimation];
+        [self updateAnimationStatus];
     }
 }
 
@@ -96,55 +99,51 @@ static NSString * const kAnimationName = @"animation";
     
     _indeterminate = indeterminate;
     
-    [self setupAnimation];
-}
-
--(void)stateChanged:(NSNotification*)notification {
-    if ( !_indeterminate ) {
-        [self setupAnimation];
-    }
-}
-
--(void)setupAnimation {
-    if ( _animation ) {
-        [_animationLayer removeAnimationForKey:kAnimationName];
-        _animation = nil;
-    }
-    
     if ( !_indeterminate ) {
         _animationLayer.borderWidth = 2.0;
         _animationLayer.contents = nil;
-        
-        _animation = [CABasicAnimation animationWithKeyPath:@"transform.scale"];
-        _animation.fromValue = @(1.0);
-        _animation.toValue = @(1.2);
-        _animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseIn];
-        _animation.autoreverses = YES;
-        _animation.duration = (60.0 / _metronome.tempo) / 2.0;
-        _animation.repeatCount = HUGE_VALF;
-        
-        double position = [_metronome timelinePositionForTime:0] + 0.5;
-        double delay = fmod(position, 1.0);
-        if ( delay > 1.0-1.0e-5 ) delay = 0.0;
-        NSTimeInterval delayInSeconds = (60.0 / _metronome.tempo) * delay;
-
-        if ( delayInSeconds <= 0.1 ) {
-            [_animationLayer addAnimation:_animation forKey:kAnimationName];
-        } else {
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [_animationLayer addAnimation:_animation forKey:kAnimationName];
-            });
-        }
     } else {
         _animationLayer.borderWidth = 0.0;
         _animationLayer.contents = (id)[self indeterminateImage].CGImage;
-        _animation = [CABasicAnimation animationWithKeyPath:@"transform.rotation"];
-        _animation.fromValue = @(0.0);
-        _animation.toValue = @(2*M_PI);
-        _animation.duration = 5.0;
-        _animation.repeatCount = HUGE_VALF;
-        [_animationLayer addAnimation:_animation forKey:kAnimationName];
     }
+    
+    [self updateAnimationStatus];
+}
+
+-(void)updateAnimationStatus {
+    if ( (_indeterminate || _metronome.started) && [UIApplication sharedApplication].applicationState == UIApplicationStateActive && !_displayLink ) {
+        self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(update)];
+        [_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+    } else {
+        if ( _displayLink ) {
+            [_displayLink invalidate];
+            self.displayLink = nil;
+        }
+    }
+}
+
+- (void)clockStartedOrStopped {
+    [self updateAnimationStatus];
+}
+
+-(void)update {
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    if ( _indeterminate ) {
+        const NSTimeInterval duration = 5.0;
+        _animationLayer.transform = CATransform3DMakeRotation((fmod(CACurrentMediaTime(), duration) / duration) * 2 * M_PI, 0, 0, 1);
+    } else {
+        double time     = [_metronome timelinePositionForTime:0];
+        double position = fmod(time, 1.0) / 1.0;
+        
+        double scale    = position < 0.5 ? 1.0 - position*2.0 : (position-0.5) * 2.0;
+        
+        const double minScale = 1.0;
+        const double maxScale = 1.2;
+        scale = minScale + ((scale*scale) * (maxScale-minScale));
+        _animationLayer.transform = CATransform3DMakeScale(scale, scale, 1);
+    }
+    [CATransaction commit];
 }
 
 -(UIImage*)indeterminateImage {
