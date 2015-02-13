@@ -27,7 +27,7 @@ NSString * const SEMIDIClockReceiverTempoKey = @"tempo";
 
 static const NSTimeInterval kIdlePollInterval        = 0.1;    // How often to poll on the main thread for events, while idle
 static const NSTimeInterval kActivePollInterval      = 0.05;   // How often to poll on the main thread for events, while actively receiving
-static const NSTimeInterval kActivityTimeout         = 0.25;   // Length of time past last seen tick beyond which we consider ourselves idle
+static const NSTimeInterval kActivityTimeout         = 0.5;    // Length of time past last seen tick beyond which we consider ourselves idle
 static const int kEventBufferSize                    = 10;     // Size of event buffer, used to notify main thread about events
 static const int kSampleBufferSize                   = 384;    // Number of samples to keep at a time. A higher value runs the risk of a longer
                                                                // time to converge to new values; a lower value runs the risk of not converging to
@@ -452,7 +452,7 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
 }
 
 BOOL SEMIDIClockReceiverIsReceivingTempo(__unsafe_unretained SEMIDIClockReceiver * receiver) {
-    return receiver->_lastTickReceiveTime && receiver->_lastTickReceiveTime >= SECurrentTimeInHostTicks() - SESecondsToHostTicks(0.5);
+    return receiver->_lastTickReceiveTime && receiver->_lastTickReceiveTime >= SECurrentTimeInHostTicks() - SESecondsToHostTicks(kActivityTimeout);
 }
 
 BOOL SEMIDIClockReceiverIsClockRunning(__unsafe_unretained SEMIDIClockReceiver * receiver) {
@@ -576,7 +576,7 @@ static void SEMIDIClockReceiverPushEvent(__unsafe_unretained SEMIDIClockReceiver
         _eventBuffer[i].type = SEEventTypeNone;
     }
     
-    if ( _lastTickReceiveTime && _lastTickReceiveTime < SECurrentTimeInHostTicks() - SESecondsToHostTicks(kActivityTimeout) ) {
+    if ( _receivingTempo && _lastTickReceiveTime && _lastTickReceiveTime < SECurrentTimeInHostTicks() - SESecondsToHostTicks(kActivityTimeout) ) {
         
         // Timed out
         if ( fabs(_eventPollTimer.timeInterval - kIdlePollInterval) > DBL_EPSILON ) {
