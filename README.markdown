@@ -7,9 +7,6 @@ It is designed to be very easy to work with, and provides precise, jitter-free M
           
 Intensively unit-tested, accompanied by extensive documentation and a complete sample app, and written by one of the pioneers of iOS audio development and developer of [Audiobus](http://audiob.us) Michael Tyson, The Spectacular Sync Engine lets you easily add sync support without needing to worry about the details.
 
-See http://thesplendidsyncengine.com for details and http://thesplendidsyncengine.com/doc for documentation.
-
-
 License
 -------
 
