@@ -45,8 +45,16 @@ static NSString * const kAnimationName = @"animation";
 }
 
 -(void)layoutSubviews {
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    
     _animationLayer.cornerRadius = self.bounds.size.width / 2.0;
+    CATransform3D transform = _animationLayer.transform;
+    _animationLayer.transform = CATransform3DIdentity;
     _animationLayer.frame = self.bounds;
+    _animationLayer.transform = transform;
+    
+    [CATransaction commit];
 }
 
 -(void)tintColorDidChange {
@@ -111,14 +119,14 @@ static NSString * const kAnimationName = @"animation";
 }
 
 -(void)updateAnimationStatus {
-    if ( (_indeterminate || _metronome.started) && [UIApplication sharedApplication].applicationState == UIApplicationStateActive && !_displayLink ) {
-        self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(update)];
-        [_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    } else {
-        if ( _displayLink ) {
-            [_displayLink invalidate];
-            self.displayLink = nil;
+    if ( (_indeterminate || _metronome.started) && [UIApplication sharedApplication].applicationState == UIApplicationStateActive ) {
+        if ( !_displayLink ) {
+            self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(update)];
+            [_displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
         }
+    } else if ( _displayLink ) {
+        [_displayLink invalidate];
+        self.displayLink = nil;
     }
 }
 
