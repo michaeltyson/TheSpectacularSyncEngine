@@ -347,12 +347,12 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                 
                 THIS->_sampleCountSinceLastTempoUpdate++;
                 
-                if ( !THIS->_tempo || (fabs(THIS->_tempo - tempo) >= kTempoChangeUpdateThreshold) ) {
+                if ( !THIS->_tempo || fabs(THIS->_tempo - tempo) >= kTempoChangeUpdateThreshold ) {
                     // A significant tempo change happened. Report it (with rate limiting)
                     BOOL reportUpdate = NO;
                     
-                    if ( !THIS->_tempo && THIS->_clockRunning ) {
-                        // If our clock's running and we don't have a tempo yet, report it right now
+                    if ( (!THIS->_tempo || THIS->_tickCount == 1) && THIS->_clockRunning ) {
+                        // If our clock's running and we don't have a tempo (or a recent tempo) yet, report it right now
                         reportUpdate = YES;
                     
                     } else if ( relativeStandardDeviation <= kTrustedStandardDeviation
@@ -752,6 +752,7 @@ static BOOL SESampleBufferSignificantChangeHappened(SESampleBuffer *buffer) {
 
 static void SESampleBufferClear(SESampleBuffer *buffer) {
     memset(buffer, 0, sizeof(SESampleBuffer));
+    buffer->significantChange = YES;
 }
 
 static int SESampleBufferFillCount(SESampleBuffer *buffer) {
