@@ -82,21 +82,25 @@ static const int kMaxPendingMessages                        = 10;     // Size of
     return [self startOrSeekWithPosition:timelinePosition atTime:applyTime startClock:NO];
 }
 
--(double)activeTimelinePositionForTime:(uint64_t)timestamp {
-    if ( !_started ) {
-        return _positionAtStart;
+-(double)timelinePositionForTime:(uint64_t)timestamp {
+    return SEMIDIClockSenderGetTimelinePosition(self, timestamp);
+}
+
+double SEMIDIClockSenderGetTimelinePosition(__unsafe_unretained SEMIDIClockSender * THIS, uint64_t time) {
+    if ( !THIS->_started ) {
+        return THIS->_positionAtStart;
     }
     
-    if ( !timestamp ) {
-        timestamp = SECurrentTimeInHostTicks();
+    if ( !time ) {
+        time = SECurrentTimeInHostTicks();
     }
     
-    if ( timestamp < _timeBase ) {
+    if ( time < THIS->_timeBase ) {
         return 0.0;
     }
     
     // Calculate offset from our time base, and convert to beats using current tempo
-    return SEHostTicksToBeats(timestamp - _timeBase, _tempo);
+    return SEHostTicksToBeats(time - THIS->_timeBase, THIS->_tempo);
 }
 
 -(void)setTimelinePosition:(double)timelinePosition {
@@ -104,7 +108,7 @@ static const int kMaxPendingMessages                        = 10;     // Size of
 }
 
 -(double)timelinePosition {
-    return [self activeTimelinePositionForTime:0];
+    return [self timelinePositionForTime:0];
 }
 
 -(void)setTempo:(double)tempo {

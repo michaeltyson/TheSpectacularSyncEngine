@@ -126,7 +126,24 @@ extern "C" {
  *      in host ticks. See mach_absolute_time, or SECurrentTimeInHostTicks
  * @return The position in your app's timeline, in beats, for the provided global timestamp
  */
--(double)activeTimelinePositionForTime:(uint64_t)timestamp;
+-(double)timelinePositionForTime:(uint64_t)timestamp;
+
+/*!
+ * Get the current timeline position, in beats
+ *
+ *  Use this C function from the realtime audio thread to determine the timeline
+ *  position, in beats (that is, quarter notes - use SEBeatsToSeconds to convert to
+ *  seconds, if necessary), for the given global timestamp.
+ *
+ *  You may use this method to keep track of the timeline while rendering, if you
+ *  do not already have your own internal clock system, and you are not currently
+ *  receiving clock messages from an external source.
+ *
+ * @param sender The sender
+ * @param time The global timestamp to retrieve the corresponding timeline position for
+ * @return The position in the remote timeline for the provided global timestamp, in beats
+ */
+double SEMIDIClockSenderGetTimelinePosition(__unsafe_unretained SEMIDIClockSender * sender, uint64_t time);
 
 /*!
  * The current position in the timeline (in beats)
