@@ -18,10 +18,9 @@ NSString * const SENotificationTimestampKey = @"timestamp";
 NSString * const SENotificationPositionKey = @"position";
 NSString * const SENotificationTempoKey = @"tempo";
 
-static const double kMajorBeatFrequency = 800;
-static const double kMinorBeatFrequency = 400;
+static const double kMajorBeatFrequency = 1200;
+static const double kMinorBeatFrequency = 800;
 static const NSTimeInterval kTickDuration = 0.1;
-static const UInt32 kMicrofadeFrames = 64;
 
 static const int kMaxTones = 2;
 
@@ -207,11 +206,7 @@ static void renderTone(SEMetronomeTone * tone, AudioBufferList *ioData, UInt32 i
         tone->position += oscillatorRate;
         if ( tone->position > 1.0 ) tone->position -= 2.0;
         
-        float gain = tone->remainingFrames >= tone->duration - kMicrofadeFrames
-                        ? (float)(tone->duration - tone->remainingFrames) / (float)kMicrofadeFrames
-                        : tone->remainingFrames <= kMicrofadeFrames
-                            ? (float)tone->remainingFrames / (float)kMicrofadeFrames
-                            : 1.0;
+        float gain = (float)tone->remainingFrames / (float)tone->duration;
         
         ((float*)ioData->mBuffers[0].mData)[i] += x * gain;
         ((float*)ioData->mBuffers[1].mData)[i] += x * gain;
