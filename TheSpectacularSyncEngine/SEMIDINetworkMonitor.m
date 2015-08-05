@@ -43,14 +43,14 @@ static void * kMIDINetworkSessionEnabledChanged = &kMIDINetworkSessionEnabledCha
         [self start];
     }
     
-    [[MIDINetworkSession defaultSession] addObserver:self forKeyPath:@"isEnabled" options:0 context:kMIDINetworkSessionEnabledChanged];
+    [[MIDINetworkSession defaultSession] addObserver:self forKeyPath:@"enabled" options:0 context:kMIDINetworkSessionEnabledChanged];
     
     return self;
 }
 
 -(void)dealloc {
     [self stop];
-    [[MIDINetworkSession defaultSession] removeObserver:self forKeyPath:@"isEnabled"];
+    [[MIDINetworkSession defaultSession] removeObserver:self forKeyPath:@"enabled"];
 }
 
 -(void)start {
