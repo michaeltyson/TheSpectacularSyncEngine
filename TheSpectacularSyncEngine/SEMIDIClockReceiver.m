@@ -428,11 +428,16 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
     _lastTickReceiveTime = 0;
     _tickCount = 0;
     _receivingTempo = NO;
-    _savedSongPosition = 0;
+    _primedAction = 0;
+    _primedActionTimestamp = 0;
     _sampleCountSinceLastTempoUpdate = 0;
+    _newProposedTempoValue = 0;
+    _contiguousSampleCount = 0;
     SESampleBufferClear(&_tickSampleBuffer);
     SESampleBufferClear(&_timeBaseSampleBuffer);
     for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
+    _lastTempoHistoryBucket = 0;
+    _error = 0.0;
     [self didChangeValueForKey:@"receivingTempo"];
     
     [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStopTempoSyncNotification
@@ -576,7 +581,7 @@ static void SEMIDIClockReceiverPushEvent(__unsafe_unretained SEMIDIClockReceiver
         _eventBuffer[i].type = SEEventTypeNone;
     }
     
-    if ( _receivingTempo && _lastTickReceiveTime && _lastTickReceiveTime < SECurrentTimeInHostTicks() - SESecondsToHostTicks(kActivityTimeout) ) {
+    if ( _lastTickReceiveTime && _lastTickReceiveTime < SECurrentTimeInHostTicks() - SESecondsToHostTicks(kActivityTimeout) ) {
         
         // Timed out
         if ( fabs(_eventPollTimer.timeInterval - kIdlePollInterval) > DBL_EPSILON ) {
@@ -588,31 +593,7 @@ static void SEMIDIClockReceiverPushEvent(__unsafe_unretained SEMIDIClockReceiver
                                                                   repeats:YES];
         }
         
-        [self willChangeValueForKey:@"receivingTempo"];
-        _tickCount = 0;
-        _lastTick = 0;
-        _lastTickReceiveTime = 0;
-        _receivingTempo = NO;
-        _sampleCountSinceLastTempoUpdate = 0;
-        SESampleBufferClear(&_tickSampleBuffer);
-        SESampleBufferClear(&_timeBaseSampleBuffer);
-        for ( int i=0; i<kTempoHistoryLength; i++ ) { _tempoHistory[i].max = 0.0; _tempoHistory[i].min = DBL_MAX; }
-        [self didChangeValueForKey:@"receivingTempo"];
-        
-        [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStopTempoSyncNotification
-                                                            object:self
-                                                          userInfo:@{ SEMIDIClockReceiverTimestampKey: @(SECurrentTimeInHostTicks()) }];
-        
-        if ( _timeBase ) {
-            [self willChangeValueForKey:@"clockRunning"];
-            _timeBase = 0;
-            _clockRunning = NO;
-            [self didChangeValueForKey:@"clockRunning"];
-            
-            [[NSNotificationCenter defaultCenter] postNotificationName:SEMIDIClockReceiverDidStopNotification
-                                                                object:self
-                                                              userInfo:@{ SEMIDIClockReceiverTimestampKey: @(SECurrentTimeInHostTicks()) }];
-        }
+        [self reset];
     }
 }
 
