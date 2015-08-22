@@ -60,7 +60,7 @@ typedef struct {
     uint64_t standardDeviation;
     uint64_t mean;
     uint64_t outliers[kOutliersBeforeReset];
-    int outlierCount;
+    int contiguousOutlierCount;
     int seenSamples;
     int sampleCountSinceLastSignificantChange;
     BOOL significantChange;
@@ -622,19 +622,14 @@ static void SESampleBufferIntegrateSample(SESampleBuffer *buffer, uint64_t sampl
                     || sample < (buffer->mean < outlierThreshold ? 0 : buffer->mean - outlierThreshold);
         
         // Make sure other outliers we've seen lie on the same side of the current range
-        if ( outlier && buffer->outlierCount > 0 ) {
+        if ( outlier && buffer->contiguousOutlierCount > 0 ) {
             BOOL greaterThanRange = sample > buffer->mean + outlierThreshold;
-            for ( int i=0; i<buffer->outlierCount; i++ ) {
+            for ( int i=0; i<buffer->contiguousOutlierCount; i++ ) {
                 if ( greaterThanRange == (buffer->outliers[i] < buffer->mean + outlierThreshold) ) {
                     // This outlier is on the other side of the range, which means we're not looking at
-                    // outliers representing a new value, but outlying normal samples. We can safely integrate
-                    // these now, as given that there's more than one, it also doesn't represent a timeline
-                    // adjustment.
+                    // outliers representing a new value, but outlying samples.
                     outlier = NO;
-                    for ( int i=0; i<buffer->outlierCount; i++ ) {
-                        _SESampleBufferAddSampleToBuffer(buffer, buffer->outliers[i]);
-                    }
-                    buffer->outlierCount = 0;
+                    buffer->contiguousOutlierCount = 0;
                 }
             }
         }
@@ -642,9 +637,9 @@ static void SESampleBufferIntegrateSample(SESampleBuffer *buffer, uint64_t sampl
     
     if ( outlier ) {
         // Handle outliers
-        buffer->outliers[buffer->outlierCount++] = sample;
+        buffer->outliers[buffer->contiguousOutlierCount++] = sample;
         
-        if ( buffer->outlierCount == kOutliersBeforeReset ) {
+        if ( buffer->contiguousOutlierCount == kOutliersBeforeReset ) {
             // Reset our sample buffer
             buffer->head = buffer->tail = 0;
             buffer->accumulator = 0;
@@ -653,25 +648,18 @@ static void SESampleBufferIntegrateSample(SESampleBuffer *buffer, uint64_t sampl
             buffer->significantChange = YES;
             
             // Add the outliers
-            for ( int i=0; i<buffer->outlierCount; i++ ) {
+            for ( int i=0; i<buffer->contiguousOutlierCount; i++ ) {
                 _SESampleBufferAddSampleToBuffer(buffer, buffer->outliers[i]);
             }
             
-            buffer->outlierCount = 0;
+            buffer->contiguousOutlierCount = 0;
         } else {
             // Ignore outlier for now
         }
     } else {
         // Not an outlier: integrate this sample
         _SESampleBufferAddSampleToBuffer(buffer, sample);
-        
-        if ( buffer->outlierCount != 0 ) {
-            // Integrate any outliers we saw
-            for ( int i=0; i<buffer->outlierCount; i++ ) {
-                _SESampleBufferAddSampleToBuffer(buffer, buffer->outliers[i]);
-            }
-            buffer->outlierCount = 0;
-        }
+        buffer->contiguousOutlierCount = 0;
     }
     
 #ifdef DEBUG_LOGGING
