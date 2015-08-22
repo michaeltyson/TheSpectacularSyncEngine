@@ -147,7 +147,7 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
         }
         
 #ifdef DEBUG_ALL_MESSAGES
-        NSLog(@"%llu: %@",
+        NSLog(@"%llu: Incoming %@",
               timestamp,
               packet->data[0] == SEMIDIMessageClockStart ? @"Start" :
               packet->data[0] == SEMIDIMessageClockStop ? @"Stop" :
@@ -249,7 +249,7 @@ void SEMIDIClockReceiverReceivePacketList(__unsafe_unretained SEMIDIClockReceive
                     }
                 }
                 
-                if ( THIS->_primedActionTimestamp ) {
+                if ( THIS->_primedActionTimestamp && THIS->_clockRunning ) {
                     // There's a prior tick we need to count
                     THIS->_tickCount++;
                 }
