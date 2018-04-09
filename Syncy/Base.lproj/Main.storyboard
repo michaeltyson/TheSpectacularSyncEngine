@@ -1,12 +1,46 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6254" systemVersion="14C109" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="BYZ-38-t0r">
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14109" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="GAO-Yg-TIS">
+    <device id="retina4_7" orientation="portrait">
+        <adaptation id="fullscreen"/>
+    </device>
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6247"/>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
         <capability name="Alignment constraints with different attributes" minToolsVersion="5.1"/>
         <capability name="Aspect ratio constraints" minToolsVersion="5.1"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
+        <!--Init View Controller-->
+        <scene sceneID="bOg-Kk-wfW">
+            <objects>
+                <viewController id="GAO-Yg-TIS" customClass="SEInitViewController" sceneMemberID="viewController">
+                    <layoutGuides>
+                        <viewControllerLayoutGuide type="top" id="Ynn-WY-lWB"/>
+                        <viewControllerLayoutGuide type="bottom" id="ioZ-Pq-qef"/>
+                    </layoutGuides>
+                    <view key="view" contentMode="scaleToFill" id="q4D-Do-1H4">
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="mT8-bG-vvd">
+                                <rect key="frame" x="123" y="174" width="165" height="52"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <state key="normal" title="StartSync"/>
+                                <connections>
+                                    <action selector="StartSync:" destination="GAO-Yg-TIS" eventType="touchUpInside" id="1Bd-ie-Yrs"/>
+                                    <segue destination="BYZ-38-t0r" kind="show" id="FmD-oZ-wQP"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="BTG-jW-P4n" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-218.40000000000001" y="480.80959520239884"/>
+        </scene>
         <!--Main View Controller-->
         <scene sceneID="tne-QT-ifu">
             <objects>
@@ -16,22 +50,22 @@
                         <viewControllerLayoutGuide type="bottom" id="wfy-db-euE"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC" customClass="SEBackgroundView">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="StW-h4-bpb" customClass="SETempoPulseView">
-                                <rect key="frame" x="150" y="149" width="300" height="300"/>
+                                <rect key="frame" x="62.5" y="208" width="250" height="250"/>
                                 <subviews>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="120 BPM" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5kh-IQ-ISA">
-                                        <rect key="frame" x="52" y="121" width="196" height="57.5"/>
+                                        <rect key="frame" x="27" y="96" width="196" height="57.5"/>
                                         <fontDescription key="fontDescription" name="HelveticaNeue-UltraLight" family="Helvetica Neue" pointSize="50"/>
-                                        <color key="textColor" red="0.95294117649999999" green="0.60784313729999995" blue="0.1176470588" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <color key="textColor" red="0.9330025315284729" green="0.53755271434783936" blue="0.096847370266914368" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <nil key="highlightedColor"/>
                                     </label>
                                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="0% ERROR" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="JdM-Ba-msM">
-                                        <rect key="frame" x="101" y="186" width="96.5" height="24"/>
+                                        <rect key="frame" x="76" y="161" width="96.5" height="24"/>
                                         <fontDescription key="fontDescription" name="HelveticaNeue-Thin" family="Helvetica Neue" pointSize="20"/>
-                                        <color key="textColor" red="0.95294117649999999" green="0.60784313729999995" blue="0.1176470588" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <color key="textColor" red="0.9330025315284729" green="0.53755271434783936" blue="0.096847370266914368" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <nil key="highlightedColor"/>
                                     </label>
                                 </subviews>
@@ -70,71 +104,65 @@
                                 </variation>
                             </view>
                             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="23:3:1" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7P4-qG-q6v">
-                                <rect key="frame" x="272" y="240" width="56" height="24"/>
+                                <rect key="frame" x="159.5" y="274" width="56" height="24"/>
                                 <fontDescription key="fontDescription" name="HelveticaNeue-Thin" family="Helvetica Neue" pointSize="20"/>
-                                <color key="textColor" red="0.95294117649999999" green="0.60784313729999995" blue="0.1176470588" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <color key="textColor" red="0.9330025315284729" green="0.53755271434783936" blue="0.096847370266914368" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="BDK-Dc-J0U">
-                                <rect key="frame" x="0.0" y="563" width="128" height="46"/>
+                                <rect key="frame" x="123.5" y="20" width="128" height="46"/>
                                 <fontDescription key="fontDescription" name="HelveticaNeue-Thin" family="Helvetica Neue" pointSize="28"/>
                                 <state key="normal" title="SOURCES">
-                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                    <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
-                                <variation key="heightClass=regular-widthClass=compact" misplaced="YES">
-                                    <rect key="frame" x="8" y="20" width="128" height="46"/>
-                                </variation>
                                 <connections>
                                     <segue destination="uqI-UU-OUa" kind="presentation" id="1Ts-Dg-gy7"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" highlighted="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="iXu-pa-GgL" customClass="SEPlayPauseButton">
-                                <rect key="frame" x="252" y="539" width="95" height="95"/>
+                                <rect key="frame" x="139.5" y="498" width="95" height="95"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="95" id="71w-GA-bLd"/>
                                     <constraint firstAttribute="width" constant="95" id="p12-6G-Z3P"/>
                                 </constraints>
                                 <state key="normal">
-                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                    <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
                                 <connections>
                                     <action selector="togglePlayPause:" destination="BYZ-38-t0r" eventType="touchUpInside" id="e0j-hQ-StZ"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="HoQ-PU-0a0">
-                                <rect key="frame" x="445" y="563" width="181" height="46"/>
+                                <rect key="frame" x="97.5" y="67" width="181" height="46"/>
                                 <fontDescription key="fontDescription" name="HelveticaNeue-Thin" family="Helvetica Neue" pointSize="28"/>
                                 <state key="normal" title="DESTINATIONS">
-                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                    <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
-                                <variation key="heightClass=regular-widthClass=compact" misplaced="YES">
-                                    <rect key="frame" x="225" y="20" width="181" height="46"/>
-                                </variation>
                                 <connections>
                                     <segue destination="Jud-zI-Lpl" kind="presentation" id="i7I-eB-XGg"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" highlighted="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="xcv-Ax-Rip" customClass="SEForwardButton">
-                                <rect key="frame" x="355" y="561" width="50" height="50"/>
+                                <rect key="frame" x="242.5" y="520" width="50" height="50"/>
                                 <constraints>
                                     <constraint firstAttribute="width" constant="50" id="MGm-Ft-VJh"/>
                                     <constraint firstAttribute="height" constant="50" id="ZOx-cN-gn3"/>
                                 </constraints>
                                 <state key="normal">
-                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                    <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
                                 <connections>
                                     <action selector="forward:" destination="BYZ-38-t0r" eventType="touchUpInside" id="pGg-Ud-kVp"/>
                                 </connections>
                             </button>
                             <button opaque="NO" contentMode="scaleToFill" highlighted="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Dcr-CR-euY" customClass="SEBackButton">
-                                <rect key="frame" x="194" y="561" width="50" height="50"/>
+                                <rect key="frame" x="81.5" y="520" width="50" height="50"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="50" id="CGL-ri-DF2"/>
                                     <constraint firstAttribute="width" constant="50" id="Wtw-I3-BN5"/>
                                 </constraints>
                                 <state key="normal">
-                                    <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                    <color key="titleShadowColor" red="0.5" green="0.5" blue="0.5" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 </state>
                                 <variation key="heightClass=compact">
                                     <mask key="constraints">
@@ -147,7 +175,7 @@
                                 </connections>
                             </button>
                         </subviews>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="iXu-pa-GgL" firstAttribute="centerY" secondItem="Dcr-CR-euY" secondAttribute="centerY" id="1Jl-7j-HQF"/>
                             <constraint firstItem="xcv-Ax-Rip" firstAttribute="leading" secondItem="iXu-pa-GgL" secondAttribute="trailing" constant="8" id="6fl-fC-j2L"/>
@@ -176,16 +204,16 @@
                         </constraints>
                         <variation key="default">
                             <mask key="constraints">
+                                <exclude reference="6xO-FP-X0g"/>
+                                <exclude reference="P1A-R5-idb"/>
+                                <exclude reference="kjc-dd-djr"/>
+                                <exclude reference="nfn-h3-Avv"/>
                                 <exclude reference="aX3-MH-CI6"/>
                                 <exclude reference="y7m-iv-cgJ"/>
                                 <exclude reference="zVM-Y3-gwp"/>
                                 <exclude reference="9Gw-RZ-0IZ"/>
                                 <exclude reference="dcu-xg-GfL"/>
                                 <exclude reference="z9x-cR-LMu"/>
-                                <exclude reference="6xO-FP-X0g"/>
-                                <exclude reference="P1A-R5-idb"/>
-                                <exclude reference="kjc-dd-djr"/>
-                                <exclude reference="nfn-h3-Avv"/>
                             </mask>
                         </variation>
                         <variation key="heightClass=compact">
@@ -194,6 +222,10 @@
                                 <exclude reference="Dcr-CR-euY"/>
                             </mask>
                             <mask key="constraints">
+                                <exclude reference="QA2-T3-hmc"/>
+                                <exclude reference="dI0-NH-cx0"/>
+                                <include reference="kjc-dd-djr"/>
+                                <include reference="nfn-h3-Avv"/>
                                 <exclude reference="ow6-6i-u4t"/>
                                 <include reference="y7m-iv-cgJ"/>
                                 <include reference="zVM-Y3-gwp"/>
@@ -206,14 +238,16 @@
                                 <exclude reference="trE-gc-JZm"/>
                                 <include reference="z9x-cR-LMu"/>
                                 <exclude reference="6fl-fC-j2L"/>
-                                <exclude reference="QA2-T3-hmc"/>
-                                <exclude reference="dI0-NH-cx0"/>
-                                <include reference="kjc-dd-djr"/>
-                                <include reference="nfn-h3-Avv"/>
                             </mask>
                         </variation>
                         <variation key="widthClass=compact">
                             <mask key="constraints">
+                                <include reference="6xO-FP-X0g"/>
+                                <include reference="P1A-R5-idb"/>
+                                <exclude reference="QA2-T3-hmc"/>
+                                <exclude reference="dI0-NH-cx0"/>
+                                <exclude reference="kjc-dd-djr"/>
+                                <exclude reference="nfn-h3-Avv"/>
                                 <include reference="aX3-MH-CI6"/>
                                 <exclude reference="ow6-6i-u4t"/>
                                 <include reference="y7m-iv-cgJ"/>
@@ -221,30 +255,23 @@
                                 <include reference="9Gw-RZ-0IZ"/>
                                 <exclude reference="Abc-dv-BTS"/>
                                 <exclude reference="b3Q-3U-kLE"/>
-                                <include reference="6xO-FP-X0g"/>
-                                <include reference="P1A-R5-idb"/>
-                                <exclude reference="QA2-T3-hmc"/>
-                                <exclude reference="dI0-NH-cx0"/>
-                                <exclude reference="kjc-dd-djr"/>
-                                <exclude reference="nfn-h3-Avv"/>
                             </mask>
                         </variation>
                         <variation key="heightClass=compact-widthClass=compact">
                             <mask key="constraints">
+                                <exclude reference="6xO-FP-X0g"/>
+                                <exclude reference="P1A-R5-idb"/>
+                                <include reference="kjc-dd-djr"/>
+                                <include reference="nfn-h3-Avv"/>
                                 <exclude reference="aX3-MH-CI6"/>
                                 <include reference="y7m-iv-cgJ"/>
                                 <include reference="zVM-Y3-gwp"/>
                                 <exclude reference="9Gw-RZ-0IZ"/>
                                 <include reference="z9x-cR-LMu"/>
-                                <exclude reference="6xO-FP-X0g"/>
-                                <exclude reference="P1A-R5-idb"/>
-                                <include reference="kjc-dd-djr"/>
-                                <include reference="nfn-h3-Avv"/>
                             </mask>
                         </variation>
                     </view>
                     <simulatedStatusBarMetrics key="simulatedStatusBarMetrics" statusBarStyle="lightContent"/>
-                    <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     <connections>
                         <outlet property="backButton" destination="Dcr-CR-euY" id="XFD-NA-sAN"/>
                         <outlet property="forwardButton" destination="xcv-Ax-Rip" id="uUO-db-j7k"/>
@@ -264,9 +291,9 @@
             <objects>
                 <tableViewController id="goN-Qu-b8S" customClass="SEMIDISourcesTableViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="TAc-kD-K9J">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <connections>
                             <outlet property="dataSource" destination="goN-Qu-b8S" id="uhh-f9-eYo"/>
                             <outlet property="delegate" destination="goN-Qu-b8S" id="RnI-bD-1cW"/>
@@ -291,7 +318,7 @@
                     <toolbarItems/>
                     <value key="contentSizeForViewInPopover" type="size" width="350" height="300"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="Lzz-XM-mRN">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <rect key="frame" x="0.0" y="20" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <nil name="viewControllers"/>
@@ -308,9 +335,9 @@
             <objects>
                 <tableViewController id="Vrd-Pt-eYa" customClass="SEMIDIDestinationsTableViewController" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="none" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="DPp-56-3T8">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <connections>
                             <outlet property="dataSource" destination="Vrd-Pt-eYa" id="24G-zz-5Jg"/>
                             <outlet property="delegate" destination="Vrd-Pt-eYa" id="M16-0e-cbS"/>
@@ -335,7 +362,7 @@
                     <toolbarItems/>
                     <value key="contentSizeForViewInPopover" type="size" width="350" height="300"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="YiX-vg-o8W">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <rect key="frame" x="0.0" y="20" width="375" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <nil name="viewControllers"/>
@@ -352,5 +379,5 @@
         <segue reference="i7I-eB-XGg"/>
         <segue reference="1Ts-Dg-gy7"/>
     </inferredMetricsTieBreakers>
-    <color key="tintColor" red="0.95294117649999999" green="0.60784313729999995" blue="0.1176470588" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+    <color key="tintColor" red="0.9330025315284729" green="0.53755271434783936" blue="0.096847370266914368" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
 </document>

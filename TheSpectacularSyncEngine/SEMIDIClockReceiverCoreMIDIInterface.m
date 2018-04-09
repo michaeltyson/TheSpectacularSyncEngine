@@ -169,7 +169,8 @@ static void midiNotify(const MIDINotification * message, void * inRefCon) {
     
     switch ( message->messageID ) {
         case kMIDIMsgObjectAdded:
-        case kMIDIMsgObjectRemoved: {
+        case kMIDIMsgObjectRemoved:
+        case kMIDIMsgSetupChanged: {
             if ( message->messageID == kMIDIMsgObjectRemoved ) {
                 MIDIObjectAddRemoveNotification * notification = (MIDIObjectAddRemoveNotification *)message;
                 SEMIDIEndpoint * source = [[SEMIDIEndpoint alloc] initWithEndpoint:notification->child];
