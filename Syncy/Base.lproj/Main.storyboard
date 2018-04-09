@@ -20,13 +20,14 @@
                         <viewControllerLayoutGuide type="top" id="Ynn-WY-lWB"/>
                         <viewControllerLayoutGuide type="bottom" id="ioZ-Pq-qef"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="q4D-Do-1H4">
+                    <view key="view" contentMode="scaleToFill" id="q4D-Do-1H4" customClass="SEBackgroundView">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="mT8-bG-vvd">
-                                <rect key="frame" x="123" y="174" width="165" height="52"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <rect key="frame" x="105" y="307" width="165" height="52"/>
+                                <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                                <fontDescription key="fontDescription" name="HelveticaNeue-Thin" family="Helvetica Neue" pointSize="28"/>
                                 <state key="normal" title="StartSync"/>
                                 <connections>
                                     <action selector="StartSync:" destination="GAO-Yg-TIS" eventType="touchUpInside" id="1Bd-ie-Yrs"/>
