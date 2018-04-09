@@ -63,7 +63,7 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(wentActive:) name:SEMIDIClockReceiverDidStartTempoSyncNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(wentInactive:) name:SEMIDIClockReceiverDidStopTempoSyncNotification object:nil];
     
-    //[[UIApplication sharedApplication] setIdleTimerDisabled:YES];
+    [[UIApplication sharedApplication] setIdleTimerDisabled:YES];
     
     [MIDINetworkSession defaultSession].enabled = YES;
     [MIDINetworkSession defaultSession].connectionPolicy = MIDINetworkConnectionPolicy_Anyone;
