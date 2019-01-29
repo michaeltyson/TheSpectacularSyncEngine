@@ -169,6 +169,7 @@ double SEMIDIClockSenderGetTimelinePosition(__unsafe_unretained SEMIDIClockSende
             applyTime = _nextTickTime ? _nextTickTime : SECurrentTimeInHostTicks();
         } else if ( _nextTickTime ) {
             // Find the next tick time after the given apply time
+            uint64_t originalApplyTime = applyTime;
             if ( applyTime < _nextTickTime ) {
                 applyTime = _nextTickTime;
             } else {
@@ -176,6 +177,10 @@ double SEMIDIClockSenderGetTimelinePosition(__unsafe_unretained SEMIDIClockSende
                 if ( modulus > beatSyncThreshold && (tickDuration - modulus) > beatSyncThreshold ) {
                     applyTime += tickDuration - modulus;
                 }
+            }
+            if ( applyTime > originalApplyTime ) {
+                // Need to adjust the timeline position accordingly
+                timelinePosition += SEHostTicksToBeats(applyTime - originalApplyTime, _tempo);
             }
         }
         

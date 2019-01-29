@@ -109,9 +109,8 @@ extern "C" {
  *      notes - use SESecondsToBeats to convert from seconds, if necessary)
  * @param applyTime The global timestamp at which to apply the timeline change, in host ticks
  *      or zero (recommended). See mach_absolute_time, or SECurrentTimeInHostTicks
- * @return The timestamp at which the position change will occur. If you have set the
- *      sendClockTicksWhileTimelineStopped property to YES, your app must wait until
- *      this time before seeking in the local timeline.
+ * @return The timestamp at which the position change will occur. If you have passed a zero
+ *      applyTime value, your app must wait until this time before seeking in the local timeline.
  */
 -(uint64_t)setActiveTimelinePosition:(double)timelinePosition atTime:(uint64_t)applyTime;
 
