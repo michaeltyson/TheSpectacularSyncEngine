@@ -103,6 +103,10 @@ double SEMIDIClockSenderGetTimelinePosition(__unsafe_unretained SEMIDIClockSende
     return SEHostTicksToBeats(time - THIS->_timeBase, THIS->_tempo);
 }
 
+BOOL SEMIDIClockSenderIsStarted(__unsafe_unretained SEMIDIClockSender * THIS) {
+    return THIS->_started;
+}
+
 -(void)setTimelinePosition:(double)timelinePosition {
     [self setActiveTimelinePosition:timelinePosition atTime:SECurrentTimeInHostTicks()];
 }

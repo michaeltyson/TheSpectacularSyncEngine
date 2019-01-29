@@ -145,6 +145,14 @@ extern "C" {
 double SEMIDIClockSenderGetTimelinePosition(__unsafe_unretained SEMIDIClockSender * sender, uint64_t time);
 
 /*!
+ * Determine whether clock is started
+ *
+ * @param sender The sender
+ * @return Whether clock is running
+ */
+BOOL SEMIDIClockSenderIsStarted(__unsafe_unretained SEMIDIClockSender * sender);
+
+/*!
  * The current position in the timeline (in beats)
  *
  *  Assign a value to this property to cue playback to the given the timeline position, in beats
