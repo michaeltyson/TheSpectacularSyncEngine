@@ -9,6 +9,7 @@
 #import "SEAudioEngine.h"
 #import <AudioToolbox/AudioToolbox.h>
 #import <AVFoundation/AVFoundation.h>
+#import "SECommon.h"
 
 #define checkResult(result,operation) (_checkResult((result),(operation),strrchr(__FILE__, '/')+1,__LINE__))
 static inline BOOL _checkResult(OSStatus result, const char *operation, const char* file, int line) {
@@ -23,9 +24,10 @@ static inline BOOL _checkResult(OSStatus result, const char *operation, const ch
 @interface SEAudioEngine () {
     AudioUnit _audioUnit;
     SEAudioEngineRenderCallback _providerRenderCallback;
+    uint64_t _outputLatency;
 }
 @property (nonatomic, strong) id<SEAudioEngineAudioProvider> provider;
-@property (nonatomic, strong) id observerToken;
+@property (nonatomic, strong) NSArray * observerTokens;
 @end
 
 
@@ -91,21 +93,27 @@ static inline BOOL _checkResult(OSStatus result, const char *operation, const ch
     // Initialize the audio unit
     checkResult(AudioUnitInitialize(_audioUnit), "AudioUnitInitialize");
     
-    // Watch for session interruptions
-    self.observerToken =
-    [[NSNotificationCenter defaultCenter] addObserverForName:AVAudioSessionInterruptionNotification object:nil queue:nil usingBlock:^(NSNotification *notification) {
-        NSInteger type = [notification.userInfo[AVAudioSessionInterruptionTypeKey] integerValue];
-        if ( type == AVAudioSessionInterruptionTypeBegan ) {
-            [self stop];
-        } else {
-            if ( ![self start] ) {
-                // Work around an iOS 7 audio interruption bug
-                [self teardownAudioSystem];
-                [self setupAudioSystem];
-                [self start];
+    NSNotificationCenter * nc = [NSNotificationCenter defaultCenter];
+    self.observerTokens = @[
+        // Watch for session interruptions
+        [nc addObserverForName:AVAudioSessionInterruptionNotification object:nil queue:nil usingBlock:^(NSNotification *notification) {
+            NSInteger type = [notification.userInfo[AVAudioSessionInterruptionTypeKey] integerValue];
+            if ( type == AVAudioSessionInterruptionTypeBegan ) {
+                [self stop];
+            } else {
+                if ( ![self start] ) {
+                    // Work around an iOS 7 audio interruption bug
+                    [self teardownAudioSystem];
+                    [self setupAudioSystem];
+                    [self start];
+                }
             }
-        }
-    }];
+        }],
+        // Watch for route changes
+        [nc addObserverForName:AVAudioSessionRouteChangeNotification object:nil queue:nil usingBlock:^(NSNotification *notification) {
+            _outputLatency = SESecondsToHostTicks([AVAudioSession sharedInstance].outputLatency);
+        }]
+    ];
 }
 
 -(void)teardownAudioSystem {
@@ -114,9 +122,11 @@ static inline BOOL _checkResult(OSStatus result, const char *operation, const ch
         _audioUnit = NULL;
     }
     
-    if ( _observerToken ) {
-        [[NSNotificationCenter defaultCenter] removeObserver:_observerToken];
-        self.observerToken = nil;
+    if ( self.observerTokens ) {
+        for ( id token in self.observerTokens ) {
+            [[NSNotificationCenter defaultCenter] removeObserver:token];
+        }
+        self.observerTokens = nil;
     }
 }
 
@@ -132,6 +142,8 @@ static inline BOOL _checkResult(OSStatus result, const char *operation, const ch
         NSLog(@"Couldn't activate audio session: %@", error);
         return NO;
     }
+    
+    _outputLatency = SESecondsToHostTicks([AVAudioSession sharedInstance].outputLatency);
     
     if ( !checkResult(AudioOutputUnitStart(_audioUnit), "AudioOutputUnitStart") ) {
         return NO;
@@ -161,7 +173,9 @@ static OSStatus audioUnitRenderCallback(void *inRefCon, AudioUnitRenderActionFla
     }
     
     __unsafe_unretained SEAudioEngine *THIS = (__bridge SEAudioEngine*)inRefCon;
-    THIS->_providerRenderCallback(THIS->_provider, inTimeStamp, ioData, inNumberFrames);
+    AudioTimeStamp timestamp = *inTimeStamp;
+    timestamp.mHostTime += THIS->_outputLatency;
+    THIS->_providerRenderCallback(THIS->_provider, &timestamp, ioData, inNumberFrames);
     
     return noErr;
 }
