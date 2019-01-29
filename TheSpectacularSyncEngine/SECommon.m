@@ -13,7 +13,7 @@
 static double __hostTicksToSeconds = 0.0;
 static double __secondsToHostTicks = 0.0;
 
-static void SEMIDIInit() {
+static void SEMIDIInit(void) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         mach_timebase_info_data_t tinfo;
@@ -23,11 +23,11 @@ static void SEMIDIInit() {
     });
 }
 
-uint64_t SECurrentTimeInHostTicks() {
+uint64_t SECurrentTimeInHostTicks(void) {
     return mach_absolute_time();
 }
 
-double SECurrentTimeInSeconds() {
+double SECurrentTimeInSeconds(void) {
     if ( !__hostTicksToSeconds ) SEMIDIInit();
     return mach_absolute_time() * __hostTicksToSeconds;
 }

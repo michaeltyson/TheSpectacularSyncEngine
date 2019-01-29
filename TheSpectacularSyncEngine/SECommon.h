@@ -41,12 +41,12 @@ typedef enum {
 /*!
  * Get current global timestamp, in host ticks
  */
-uint64_t SECurrentTimeInHostTicks();
+uint64_t SECurrentTimeInHostTicks(void);
 
 /*!
  * Get current global timestamp, in seconds
  */
-NSTimeInterval SECurrentTimeInSeconds();
+NSTimeInterval SECurrentTimeInSeconds(void);
 
 /*!
  * Convert time in seconds to host ticks
