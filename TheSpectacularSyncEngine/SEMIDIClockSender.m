@@ -292,17 +292,19 @@ BOOL SEMIDIClockSenderIsStarted(__unsafe_unretained SEMIDIClockSender * THIS) {
         
         @synchronized ( _sender ) {
             uint64_t now = SECurrentTimeInHostTicks();
+            uint64_t nextTickTime = _sender.nextTickTime;
             
-            if ( !_sender.nextTickTime ) {
-                _sender.nextTickTime = now;
+            if ( !nextTickTime ) {
+                _sender.nextTickTime = nextTickTime = now;
             }
             
             // Send the next batch of ticks
             uint64_t tickDuration = SESecondsToHostTicks((60.0 / _sender.tempo) / SEMIDITicksPerBeat);
-            _sender.nextTickTime = [self sendFromTime:_sender.nextTickTime toTime:now + (tickDuration * kTicksPerSendInterval)];
+            uint64_t endTime = MAX(nextTickTime, now) + (tickDuration * kTicksPerSendInterval);
+            _sender.nextTickTime = nextTickTime = [self sendFromTime:nextTickTime toTime:endTime];
             
             // Wait half the duration of the ticks we just sent (to avoid running out of time; we'll skip the ticks we've already sent)
-            nextSendTime = now + (tickDuration * kTicksPerSendInterval) / 2;
+            nextSendTime = nextTickTime - (tickDuration * kTicksPerSendInterval) / 2;
         }
         
         // Sleep
