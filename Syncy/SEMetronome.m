@@ -144,9 +144,8 @@ static void render(__unsafe_unretained SEMetronome * THIS, const AudioTimeStamp 
     if ( timeBase && bufferEndPosition > 0.0 ) {
         // First catch up on any missed buffers
         if ( bufferStartPosition > lastBufferPosition && bufferStartPosition-lastBufferPosition < 0.5 ) {
-            double offsetUnused;
             int beat;
-            if ( findBeatBoundary(lastBufferPosition, bufferStartPosition, &offsetUnused, &beat) && beat > THIS->_lastPlayedBeat ) {
+            if ( findBeatBoundary(lastBufferPosition, bufferStartPosition, NULL, &beat) && beat > THIS->_lastPlayedBeat ) {
                 addTone(THIS, (beat%4 == 0) ? kMajorBeatFrequency : kMinorBeatFrequency, kTickDuration * 44100.0, 0);
                 THIS->_lastPlayedBeat = beat;
             }
@@ -156,7 +155,7 @@ static void render(__unsafe_unretained SEMetronome * THIS, const AudioTimeStamp 
         double offset;
         int beat;
         if ( findBeatBoundary(bufferStartPosition, bufferEndPosition, &offset, &beat) && beat > THIS->_lastPlayedBeat ) {
-            addTone(THIS, (beat%4 == 0) ? kMajorBeatFrequency : kMinorBeatFrequency, kTickDuration * 44100.0, offset);
+            addTone(THIS, (beat%4 == 0) ? kMajorBeatFrequency : kMinorBeatFrequency, kTickDuration * 44100.0, round(SEBeatsToSeconds(offset, tempo) * 44100.0));
             THIS->_lastPlayedBeat = beat;
         }
     }
@@ -174,7 +173,9 @@ static void render(__unsafe_unretained SEMetronome * THIS, const AudioTimeStamp 
 static BOOL findBeatBoundary(double start, double end, double *outOffset, int *outBeatNumber) {
     if ( floor(start) != floor(end) || fmod(start, 1.0) < 1.0e-5 ) {
         // We straddle a boundary
-        *outOffset = fmod(start, 1.0) < 1.0e-5 ? 0.0 : ceil(start) - start;
+        if ( outOffset ) {
+            *outOffset = fmod(start, 1.0) < 1.0e-5 ? 0.0 : ceil(start) - start;
+        }
         *outBeatNumber = (int)round(start);
         return YES;
     } else {
